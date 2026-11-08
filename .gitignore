@@ -10,6 +10,9 @@ kubeconfig
 
 # Corpus files you did not write: commit corpus/MANIFEST.md and corpus/fetch.py instead
 corpus/raw/
+# Copy of the fetched corpus placed here by `make images` so it is baked into the indexer image
+indexer/corpus/*
+!indexer/corpus/.gitkeep
 
 # Python
 __pycache__/
