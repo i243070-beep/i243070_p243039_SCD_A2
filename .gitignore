@@ -1,0 +1,25 @@
+# Secrets: never committed, created with kubectl create secret (section 4.7)
+.env
+.env.*
+*-secret.yaml
+*secret*.yaml
+kubeconfig
+# ...except a placeholder that documents the Secret's shape (values: REPLACE_ME).
+# Never list it in kustomization.yaml: applying it would overwrite the real Secret.
+!*placeholder*.yaml
+
+# Corpus files you did not write: commit corpus/MANIFEST.md and corpus/fetch.py instead
+corpus/raw/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local scratch
+*.log
+.DS_Store

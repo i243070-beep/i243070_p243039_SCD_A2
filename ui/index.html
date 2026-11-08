@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAHBAR</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6b66; --line: #e3e2dd;
+    --accent: #1f5f8b; --ok-bg: #e5f2e8; --ok-ink: #1e6a33; --warn-bg: #fbefd9; --warn-ink: #8a5300;
+    --err-bg: #fbe4e2; --err-ink: #9b2c22; --code: #f1f0ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --panel: #1f1f1d; --ink: #ecebe6; --muted: #a3a29b; --line: #34332f;
+      --accent: #7cb4dc; --ok-bg: #1d3324; --ok-ink: #9ad4a9; --warn-bg: #3a2d14; --warn-ink: #f0c27a;
+      --err-bg: #3d1e1b; --err-ink: #f2a59c; --code: #2a2a27;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 160px; }
+  header h1 { margin: 0; font-size: 26px; letter-spacing: 0.02em; }
+  header p { margin: 4px 0 24px; color: var(--muted); }
+  #thread { display: flex; flex-direction: column; gap: 16px; }
+  .q { align-self: flex-end; max-width: 85%; background: var(--accent); color: #fff;
+       padding: 10px 14px; border-radius: 14px 14px 4px 14px; white-space: pre-wrap; }
+  .a { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .a .text { white-space: pre-wrap; margin: 0 0 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chip { font-size: 12.5px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line);
+          color: var(--muted); }
+  .chip.ok { background: var(--ok-bg); color: var(--ok-ink); border-color: transparent; }
+  .chip.warn { background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+       margin: 14px 0 6px; }
+  ol.cites { margin: 0; padding-left: 20px; }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; }
+  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  .meta { margin-top: 10px; font-size: 12px; color: var(--muted); }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+  .err { background: var(--err-bg); color: var(--err-ink); border-radius: 12px; padding: 12px 16px; }
+  .pending { color: var(--muted); font-style: italic; }
+  form { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg);
+         border-top: 1px solid var(--line); padding: 12px 16px 16px; }
+  .bar { max-width: 760px; margin: 0 auto; display: flex; gap: 8px; }
+  textarea { flex: 1; resize: none; height: 52px; padding: 12px; font: inherit; color: var(--ink);
+             background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button { padding: 0 20px; font: inherit; font-weight: 600; color: #fff; background: var(--accent);
+           border: 0; border-radius: 10px; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: progress; }
+  .hint { max-width: 760px; margin: 6px auto 0; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>RAHBAR</h1>
+    <p>Answers only from the indexed documents, with sources. If the documents do not cover it, it says so.</p>
+  </header>
+  <section id="thread" aria-live="polite"></section>
+</main>
+
+<form id="ask">
+  <div class="bar">
+    <textarea id="question" aria-label="Your question" placeholder="Ask about the documents, e.g. What CGPA puts a student on academic warning?" maxlength="500" required></textarea>
+    <button id="send" type="submit">Ask</button>
+  </div>
+  <div class="hint">Enter to send, Shift+Enter for a new line. 3 to 500 characters.</div>
+</form>
+
+<script>
+// The API sits behind the same Ingress host at /api. For local development you can
+// point elsewhere with ?api=http://localhost:8000 (that server must allow CORS).
+const API_BASE = new URLSearchParams(location.search).get("api") || window.RAHBAR_API || "";
+
+const thread = document.getElementById("thread");
+const form = document.getElementById("ask");
+const input = document.getElementById("question");
+const send = document.getElementById("send");
+
+// Model output and retrieved text are untrusted. Everything below is built with
+// textContent and createElement, never innerHTML, so a document or an answer
+// containing HTML or script is shown as text and never run.
+function el(tag, attrs = {}, text) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function chip(text, kind) {
+  return el("span", { class: kind ? `chip ${kind}` : "chip" }, text);
+}
+
+function cite(c) {
+  return c.page != null ? `${c.source} / ${c.section}, p. ${c.page}` : `${c.source} / ${c.section}`;
+}
+
+function renderAnswer(data, cacheHeader) {
+  const card = el("article", { class: "a" });
+
+  const chips = el("div", { class: "chips" });
+  chips.append(data.answered_from_context
+    ? chip("From the documents", "ok")
+    : chip("Not covered by the documents", "warn"));
+  if (data.confidence) chips.append(chip(`confidence: ${data.confidence}`));
+  if (data.provider) chips.append(chip(`provider: ${data.provider}`));
+  const cached = typeof data.cached === "boolean" ? data.cached
+               : cacheHeader ? cacheHeader.toUpperCase() === "HIT" : null;
+  if (cached !== null) chips.append(chip(cached ? "cache: hit" : "cache: miss"));
+  card.append(chips);
+
+  card.append(el("p", { class: "text" }, data.answer ?? ""));
+
+  if (Array.isArray(data.citations) && data.citations.length) {
+    card.append(el("h3", {}, "Sources"));
+    const list = el("ol", { class: "cites" });
+    for (const c of data.citations) list.append(el("li", {}, cite(c)));
+    card.append(list);
+  }
+
+  if (Array.isArray(data.retrieved) && data.retrieved.length) {
+    const details = el("details");
+    details.append(el("summary", {}, `Retrieved passages (${data.retrieved.length})`));
+    const table = el("table");
+    const head = el("tr");
+    for (const h of ["Source", "Section", "Page", "Score"]) head.append(el("th", {}, h));
+    table.append(head);
+    for (const r of data.retrieved) {
+      const row = el("tr");
+      row.append(el("td", {}, r.source), el("td", {}, r.section), el("td", { class: "num" }, r.page ?? "–"),
+                 el("td", { class: "num" }, typeof r.score === "number" ? r.score.toFixed(3) : "–"));
+      table.append(row);
+    }
+    details.append(table);
+    card.append(details);
+  }
+
+  if (data.request_id) {
+    const meta = el("div", { class: "meta" }, "request id ");
+    meta.append(el("code", {}, data.request_id));
+    card.append(meta);
+  }
+  return card;
+}
+
+function errorMessage(status, body) {
+  const detail = body && typeof body.detail === "string" ? body.detail : "";
+  if (status === 422) return "Questions must be 3 to 500 characters.";
+  if (status === 429) return "Too many questions in a short time. Wait a moment and try again.";
+  if (status === 503) return `The service is not ready yet${detail ? `: ${detail}` : "."}`;
+  if (status >= 500) return `The service failed (HTTP ${status})${detail ? `: ${detail}` : "."}`;
+  return `Request failed (HTTP ${status})${detail ? `: ${detail}` : "."}`;
+}
+
+async function ask(question) {
+  thread.append(el("div", { class: "q" }, question));
+  const pending = el("div", { class: "pending" }, "Retrieving passages and writing an answer…");
+  thread.append(pending);
+  pending.scrollIntoView({ behavior: "smooth", block: "end" });
+  send.disabled = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    let body = null;
+    try { body = await res.json(); } catch { /* non-JSON error page */ }
+    pending.remove();
+    if (!res.ok) {
+      thread.append(el("div", { class: "err" }, errorMessage(res.status, body)));
+    } else {
+      thread.append(renderAnswer(body, res.headers.get("X-Cache")));
+    }
+  } catch (err) {
+    pending.remove();
+    thread.append(el("div", { class: "err" }, `Could not reach the API at ${API_BASE || location.origin}/api/ask.`));
+  } finally {
+    send.disabled = false;
+    input.focus();
+    thread.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }
+}
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (q.length < 3) return;
+  input.value = "";
+  ask(q);
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+});
+</script>
+</body>
+</html>

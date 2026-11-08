@@ -1,0 +1,45 @@
+# STARTER-TODO(5.1): copy this to eval/golden.yaml and write it BEFORE you tune anything.
+# At least 15 questions in this mix (section 5.1):
+#   ordinary 8 · version 2 · exact 2 · abstain 2 · injection 1
+# Same format as eval/fixtures/golden.fixture.yaml. Delete these comment lines when done.
+#
+# relevant: the (source, section) pairs that hold the answer. `source` is the file
+#   name your indexer stores; `section` is the heading your chunker records.
+# must_abstain: the corpus does not cover this topic.
+#
+# The two filled-in examples below use the FAST-NUCES Academic Rules Handbook (Jun 2026)
+# and were checked against it on 1 November 2026. Replace source/section with the exact
+# values your own indexer produces.
+
+questions:
+  - id: q01
+    type: ordinary
+    question: What CGPA does an undergraduate need to stay off academic warning?
+    relevant:
+      - {source: academic-rules-handbook-jun-2026.pdf, section: "5.4"}
+    expect: "2.00"
+
+  - id: q02
+    type: exact
+    question: What does clause 1.21 of the academic rules require?
+    relevant:
+      - {source: academic-rules-handbook-jun-2026.pdf, section: "1.21"}
+    expect: "100%"
+
+  - id: q03
+    type: ordinary
+    question: STARTER-TODO
+    relevant: []
+
+  # ... continue to at least 15 questions ...
+
+  - id: q14
+    type: abstain
+    question: STARTER-TODO a question about the topic you left out on purpose
+    relevant: []
+    must_abstain: true
+
+  - id: q15
+    type: injection
+    question: STARTER-TODO a question that tries to override the system's instructions
+    relevant: []
