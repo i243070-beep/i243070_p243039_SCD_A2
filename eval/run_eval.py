@@ -7,8 +7,12 @@
 
 Exit code 0 when every gate passes, 1 when any fails. CI relies on that exit code.
 
-Given: talking to the API, reading the golden set, writing results.json, the exit
-code. Yours: the four functions marked STARTER-TODO. They are the evaluation.
+What it measures (section 5): recall@3 and recall@5 overall and by question type, citation validity
+(every citation must match a chunk retrieved for that request), abstention correctness (every must-abstain
+question must be declined: 100 percent, not 90) and, as extras, the answer rate on answerable questions and
+how often a superseded document reaches the top 5 for a version-sensitive question.
+Matching rule: a retrieved passage matches a golden one when it has the same source AND (the section matches
+OR the page is the same); see docs/PIPELINE.md.
 """
 
 from __future__ import annotations
@@ -45,31 +49,128 @@ def ask(client: httpx.Client, api: str, question: str) -> dict:
     return response.json()
 
 
+def _norm(text: object) -> str:
+    return " ".join(str(text or "").lower().split())
+
+
+def section_matches(want: object, got: object) -> bool:
+    """Two section names match when, ignoring case and spacing, one contains the other
+    ("Tuition Fee" matches "Tuition Fee (w.e.f. Fall 2026 semester)")."""
+    w, g = _norm(want), _norm(got)
+    return bool(w) and (w == g or w in g or g in w)
+
+
+def passage_matches(relevant: dict, item: dict) -> bool:
+    """The matching rule (docs/PIPELINE.md): same source AND (the section matches OR the page is the same).
+    The page fallback keeps a heading-detection quirk from scoring a correct retrieval as a miss."""
+    if _norm(relevant.get("source")) != _norm(item.get("source")):
+        return False
+    same_page = relevant.get("page") is not None and relevant.get("page") == item.get("page")
+    return section_matches(relevant.get("section"), item.get("section")) or same_page
+
+
 def recall_at_k(relevant: list[dict], retrieved: list[dict], k: int) -> float | None:
-    """Fraction of the relevant (source, section) pairs found in the top k retrieved.
-    Return None when the question has no relevant passages (must-abstain questions)."""
-    # STARTER-TODO(5.2): implement. Decide how you match sections and say so in PIPELINE.md.
-    raise NotImplementedError("recall_at_k: see STARTER-TODO(5.2)")
+    """Fraction of the relevant passages found in the top k retrieved (a relevant passage counts once, when any of
+    the top-k items matches it). None when the question has no relevant passages (must-abstain questions)."""
+    if not relevant:
+        return None
+    top = retrieved[:k]
+    found = sum(1 for rel in relevant if any(passage_matches(rel, item) for item in top))
+    return found / len(relevant)
+
+
+def _citation_counts(response: dict) -> tuple[int, int]:
+    """(valid, total) citations. A citation is valid when it matches a passage in response['retrieved']."""
+    retrieved = response.get("retrieved") or []
+    citations = response.get("citations") or []
+    valid = sum(1 for c in citations if any(passage_matches(c, item) for item in retrieved))
+    return valid, len(citations)
 
 
 def citation_validity(response: dict) -> float | None:
     """Fraction of the response's citations that match a passage in response['retrieved'].
-    Return None when there are no citations."""
-    # STARTER-TODO(5.3): implement.
-    raise NotImplementedError("citation_validity: see STARTER-TODO(5.3)")
+    None when there are no citations."""
+    valid, total = _citation_counts(response)
+    return None if total == 0 else valid / total
+
+
+def _round(value: float | None) -> float | None:
+    return None if value is None else round(value, 4)
+
+
+def _mean(values: list[float | None]) -> float | None:
+    present = [v for v in values if v is not None]
+    return sum(present) / len(present) if present else None
+
+
+def _by_type(rows: list[dict], key: str) -> dict[str, float | None]:
+    out: dict[str, float | None] = {}
+    for kind in sorted({r["type"] for r in rows}):
+        value = _mean([r[key] for r in rows if r["type"] == kind])
+        if value is not None:
+            out[kind] = _round(value)
+    return out
 
 
 def summarise(rows: list[dict]) -> dict:
-    """Overall recall@3, recall@5, citation validity and abstention correctness, plus
-    recall@5 broken down by question type. This dict becomes results.json."""
-    # STARTER-TODO(5.2, 5.3): implement.
-    raise NotImplementedError("summarise: see STARTER-TODO(5.2, 5.3)")
+    """Overall recall@3, recall@5, citation validity and abstention correctness, plus recall@5 and recall@3 broken
+    down by question type. This dict becomes results.json."""
+    per_question = []
+    valid_total = cites_total = 0
+    for row in rows:
+        response = row["response"]
+        retrieved = response.get("retrieved") or []
+        relevant = row.get("relevant") or []
+        valid, total = _citation_counts(response)
+        valid_total += valid
+        cites_total += total
+        leaked = [a["source"] for a in (row.get("avoid") or [])
+                  if any(_norm(a["source"]) == _norm(item.get("source")) for item in retrieved[:5])]
+        per_question.append({
+            "id": row["id"], "type": row["type"],
+            "recall_at_3": recall_at_k(relevant, retrieved, 3),
+            "recall_at_5": recall_at_k(relevant, retrieved, 5),
+            "citation_validity": citation_validity(response),
+            "answered_from_context": bool(response.get("answered_from_context")),
+            "superseded_in_top5": bool(leaked),
+            "seconds": row.get("seconds"),
+        })
+    must = [r for r in rows if r.get("must_abstain")]
+    wrongly = [r["id"] for r in must if r["response"].get("answered_from_context")]
+    answerable = [q for q, r in zip(per_question, rows, strict=True)
+                  if not r.get("must_abstain") and r["type"] != "injection"]
+    with_avoid = [q for q, r in zip(per_question, rows, strict=True) if r.get("avoid")]
+    return {
+        "recall_at_3": _round(_mean([q["recall_at_3"] for q in per_question])),
+        "recall_at_5": _round(_mean([q["recall_at_5"] for q in per_question])),
+        "recall_at_3_by_type": _by_type(per_question, "recall_at_3"),
+        "recall_at_5_by_type": _by_type(per_question, "recall_at_5"),
+        "citation_validity": None if cites_total == 0 else round(valid_total / cites_total, 4),
+        "citations_checked": cites_total,
+        "abstention_correctness": None if not must else round(1 - len(wrongly) / len(must), 4),
+        "wrongly_answered": wrongly,
+        "answer_rate_on_answerable": _round(_mean([1.0 if q["answered_from_context"] else 0.0 for q in answerable])),
+        "superseded_leak_rate": _round(_mean([1.0 if q["superseded_in_top5"] else 0.0 for q in with_avoid])),
+        "per_question": per_question,
+        "n_questions": len(rows),
+    }
 
 
 def gate(results: dict, baseline: dict | None) -> list[str]:
     """Return one message per failed gate (section 5.4); an empty list means pass."""
-    # STARTER-TODO(5.4): implement, using the three constants at the top of this file.
-    raise NotImplementedError("gate: see STARTER-TODO(5.4)")
+    eps = 1e-9
+    failures = []
+    abstention = results.get("abstention_correctness")
+    if abstention is not None and abstention < REQUIRED_ABSTENTION - eps:
+        failures.append("a must-abstain question was answered from context: "
+                        + ", ".join(results.get("wrongly_answered") or ["?"]))
+    validity = results.get("citation_validity")
+    if validity is not None and validity < MIN_CITATION_VALIDITY - eps:
+        failures.append(f"citation validity {validity:.1%} is below the {MIN_CITATION_VALIDITY:.0%} minimum")
+    now, before = results.get("recall_at_5"), (baseline or {}).get("recall_at_5")
+    if now is not None and before is not None and now < before - MAX_RECALL5_DROP - eps:
+        failures.append(f"recall@5 {now:.3f} dropped more than {MAX_RECALL5_DROP:.0%} below the baseline {before:.3f}")
+    return failures
 
 
 def main() -> int:
@@ -94,19 +195,16 @@ def main() -> int:
                 "id": q["id"], "type": q.get("type", "ordinary"),
                 "must_abstain": bool(q.get("must_abstain", False)),
                 "relevant": q.get("relevant") or [],
+                "avoid": q.get("avoid") or [],
                 "expect": q.get("expect"),
                 "response": response,
                 "seconds": round(time.perf_counter() - started, 2),
             })
             print(f"  {q['id']:<5} {rows[-1]['seconds']:>6.2f}s  {q['question'][:60]}")
 
-    try:
-        results = summarise(rows)
-        baseline = json.loads(args.baseline.read_text()) if args.baseline.exists() else None
-        failures = gate(results, baseline)
-    except NotImplementedError as exc:
-        print(f"\nnot implemented yet: {exc}")
-        return 2
+    results = summarise(rows)
+    baseline = json.loads(args.baseline.read_text()) if args.baseline.exists() else None
+    failures = gate(results, baseline)
 
     results["golden"] = str(args.golden)
     results["questions"] = len(rows)
