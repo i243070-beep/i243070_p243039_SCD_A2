@@ -1,0 +1,46 @@
+# Embedding pin guardrail (assignment section 4.4), real run on minikube, 8 November 2026
+# Scenario: someone changes EMBED_MODEL in the ConfigMap and restarts ONLY the api.
+# The indexer built the collection with nomic-embed-text; the api is told to use another model.
+
+$ kubectl -n rahbar get configmap rahbar-config -o jsonpath='{.data.EMBED_MODEL}'   (before)
+nomic-embed-text
+
+$ kubectl -n rahbar patch configmap rahbar-config --type merge -p '{"data":{"EMBED_MODEL":"all-minilm"}}'
+configmap/rahbar-config patched
+$ kubectl -n rahbar rollout restart deployment/api
+deployment.apps/api restarted
+
+$ kubectl -n rahbar get pods -l app.kubernetes.io/name=api        (new pods are 0/1 READY; the old ones keep serving: maxUnavailable 0)
+NAME                   READY   STATUS    RESTARTS   AGE
+api-67f6669bd7-lqxdp   0/1     Running   0          71s
+api-7496bbd956-8dxs5   1/1     Running   0          118s
+api-7496bbd956-gmc2t   1/1     Running   0          2m42s
+api-7496bbd956-scz24   1/1     Running   0          2m18s
+
+$ kubectl -n rahbar logs api-67f6669bd7-lqxdp | grep 'not ready'      (the log line names exactly what conflicts)
+{"ts": "2026-11-08T15:01:59Z", "level": "ERROR", "logger": "rahbar.readiness", "msg": "not ready: embedding_pin: embedding model mismatch: collection 'rahbar' was built with 'nomic-embed-text' (dimension 768) but this api is configured with EMBED_MODEL='all-minilm'; vectors from different models are not comparable", "request_id": "-", "failed": "embedding_pin", "detail": "embedding model mismatch: collection 'rahbar' was built with 'nomic-embed-text' (dimension 768) but this api is configured with EMBED_MODEL='all-minilm'; vectors from different models are not comparable"}
+
+$ kubectl -n rahbar describe pod api-67f6669bd7-lqxdp | grep -A2 'Readiness probe failed'
+  Warning  Unhealthy  62s                kubelet            spec.containers{api}: Readiness probe failed: Get "http://10.244.120.95:8000/readyz": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+  Warning  Unhealthy  2s (x7 over 62s)   kubelet            spec.containers{api}: Readiness probe failed: HTTP probe failed with statuscode: 503
+
+$ kubectl -n rahbar exec <new pod> -- python -c 'GET /readyz'
+503 {"status":"not ready","checks":{"chroma":"ok","collection":"ok (1120 chunks)","embedding_pin":"fail"},"failed":"embedding_pin","detail":"embedding model mismatch: collection 'rahbar' was built with 'nomic-embed-text' (dimension 768) but this api is configured with EMBED_MODEL='all-minilm'; vectors from different models are not comparable"}
+
+$ kubectl -n rahbar rollout status deployment/api --timeout=5s      (the rollout is stuck, not completed)
+Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
+error: timed out waiting for the condition
+
+# Without the guardrail the new pods would have become ready and answered every question with vectors
+# from the wrong model: retrieval returns nonsense and nothing errors.
+
+# Recovery: restore the correct value and restart
+configmap/rahbar-config configured
+deployment "api" successfully rolled out
+NAME                   READY   STATUS        RESTARTS   AGE
+api-6cb9c47c94-575rj   1/1     Running       0          28s
+api-6cb9c47c94-n4mbh   1/1     Running       0          48s
+api-6cb9c47c94-wdnk8   1/1     Running       0          9s
+api-7496bbd956-gmc2t   1/1     Terminating   0          3m44s
+api-7496bbd956-scz24   1/1     Terminating   0          3m20s
+EMBED_MODEL restored to: nomic-embed-text
