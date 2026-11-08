@@ -64,7 +64,7 @@ def discover(corpus_dir: str) -> list[tuple[Path, str, bool]]:
 
 
 def run_pipeline(settings: IndexerSettings) -> int:
-    from .chunk import chunk
+    from .chunk import amplification, chunk
     from .clean import clean
     from .embed import embed
     from .extract import extract
@@ -75,11 +75,20 @@ def run_pipeline(settings: IndexerSettings) -> int:
         raise SystemExit(f"no documents found in {settings.corpus_dir}")
     all_chunks: list[Chunk] = []
     for path, doc_version, superseded in documents:
-        doc = clean(extract(str(path), doc_version, superseded))
+        started = time.perf_counter()
+        raw = extract(str(path), doc_version, superseded)
+        doc = clean(raw)  # one document at a time: memory is what limits this Job
         pieces = chunk(doc, settings.chunk_size, settings.chunk_overlap)
-        log("chunked", source=path.name, chunks=len(pieces))
+        log("document indexed", source=path.name, doc_version=doc_version, superseded=superseded,
+            pages=len(raw.pages), ocr_pages=sum(1 for p in raw.pages if p.ocr),
+            pages_dropped_by_clean=len(raw.pages) - len(doc.pages), chunks=len(pieces),
+            amplification=round(amplification(doc, pieces), 2),
+            seconds=round(time.perf_counter() - started, 1))
         all_chunks.extend(pieces)
+    started = time.perf_counter()
     vectors = embed([c.text for c in all_chunks], settings)
+    log("embedded", chunks=len(all_chunks), dimension=len(vectors[0]), model=settings.embed_model,
+        seconds=round(time.perf_counter() - started, 1))
     return store(all_chunks, vectors, settings)
 
 
