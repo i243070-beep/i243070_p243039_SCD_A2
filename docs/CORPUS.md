@@ -1,15 +1,23 @@
 # Corpus
 
-<!-- STARTER-TODO(2): fill every row, then delete this comment. -->
+Source: the public FAST-NUCES website (nu.edu.pk), fetched on 8 November 2026 with `corpus/fetch.py` (one request at a time, a pause between requests, a clear User-Agent) · Documents: 9 (7 PDFs and 2 HTML pages) · Pages: 279 PDF pages plus 2 HTML pages with 8 tables.
 
-Source: FAST-NUCES public website / our own documents (pick one) · Documents: ? · Pages: ?
+We commit only `corpus/sources.yaml` (the list) and `corpus/MANIFEST.md` (URL, size and SHA-256 per file). The documents are not ours, so `corpus/raw/` is gitignored. `python corpus/fetch.py --verify` re-hashes the files; all 9 matched on the day of fetching. Only public pages were used (no SLATE, Flex or mail).
 
 | # | Required property | Document(s) that provide it | Evidence or notes |
 | --- | --- | --- | --- |
-| 1 | At least 6 documents, 40 pages | | |
-| 2 | Two versions of one policy | | Which supersedes which, and how your metadata records it |
-| 3 | Scanned, image-only PDF | | `pdffonts` output, or how you proved it has no text layer |
-| 4 | A table with real information | | |
-| 5 | Long definitions | | |
-| 6 | A deliberately absent topic | | What you left out, and why a user would plausibly ask about it |
-| 7 | Exact-term content | | Clause numbers, codes, thresholds, fees |
+| 1 | At least 6 documents, 40 pages | All 9: Undergraduate Academic Rules (Aug 2023, 26 pp), Academic Rules Handbook (Jun 2026, 58 pp), Prospectus 2026 Academic Rules (5 pp), Student Handbook (Jun 2026, 64 pp), Annual Report 2019-20 (33 pp), Annual Report 2023-24 (85 pp), Faculty Entrepreneurship Policy (8 pp), Fee Structure page, Grading page | 26 + 58 + 5 + 64 + 33 + 85 + 8 = 279 PDF pages, counted with PyMuPDF. |
+| 2 | Two versions of one policy | Undergraduate Academic Rules **Aug 2023** (`doc_version 2023-08`, `superseded: true`) and Academic Rules Handbook **Jun 2026** (`2026-06`, `superseded: false`). Also Annual Report 2019-20 (superseded) against 2023-24 | A clause-by-clause comparison found real differences, so the version-sensitive answers differ. **Summer semester:** 2023 says optional, 8 to 9 weeks; 2026 says an 8-week semester only for four categories (academic warning I or II, graduating, FYP-I eligible, prerequisite). **Retake examination policy (section 9) and the Generative AI policy (section 10)** exist only in 2026. Attendance (1.21), academic warning (5.4) and closure of admission are identical in both, which is also a useful control. `superseded` is written into every chunk's metadata so the retriever can prefer the current version. |
+| 3 | Scanned, image-only PDF | **Faculty Entrepreneurship and Technical Start-ups Policy** (8 pages) and, unexpectedly, the **2023 Academic Rules** | Faculty policy: 0 text characters and 0 fonts on all 8 pages. 2023 Rules: only 2 of 26 pages have a text layer (212 characters in total, the cover). Both need OCR. We OCR'd the 2023 file with tesseract 5.3 at 200 dpi: 26 pages in 36 seconds, about 1,245 characters per page, readable. Because the older half of the version pair is a scan, OCR quality directly limits version-sensitive retrieval. |
+| 4 | A table with real information | **Fee Structure page** (3 tables, 22 rows: fees, security deposit and refund policy) and **Grading page** (5 tables, 38 rows); also tables in both annual reports and in the 2026 Rules Handbook | Counted from the HTML source and by PyMuPDF table detection. A naive extractor jumbles the columns; the indexer writes each table row as cells separated by ` | `. |
+| 5 | Long definitions | **Policy on Generative AI Based Tools**, section 10 of the Academic Rules Handbook (pp. 34-43): introduction, objectives, guidelines, acceptable and unacceptable uses, use in assessments, use in labs, all with numbered sub-sections | About ten pages of connected definitions that a fixed-size chunker would cut in half. The Student Handbook (64 pp) adds long policy text. |
+| 6 | A deliberately absent topic | **Hostel rules, fees and timings** (we left out the Prospectus "Transport and Hostel Facilities" PDF) | Hostels are only mentioned in passing: one sentence in the Student Handbook (p. 45, "In-Campus Hostel Facility is exclusively provided at Chiniot-Faisalabad and Peshawar Campuses") and campus descriptions in the annual reports. A student plausibly asks "what are the hostel timings or fees?"; the answer is not in the corpus, so the system must abstain. Must-abstain golden questions ask about hostel rules, fees and timings, never about whether hostels exist. |
+| 7 | Exact-term content | **Clause 1.21**: 100% attendance, absence of up to 20% may be condoned by the HoD. **Clause 5.4**: minimum CGPA of 2.00 to avoid academic warning. Prospectus (academic warning section): minimum CGPA 2.00 (BS/BBA), 2.50 (MS/MBA), 3.00 (PhD). Graduation CGPA of 2.00. Refundable security deposit of Rs 20,000 | The same attendance rule is clause 1 in the 5-page Prospectus and 1.21 in the Handbook: different clause numbers for one rule, which is why plain embeddings blur exact terms and hybrid retrieval helps. |
+
+## Other traps in this corpus
+- The Prospectus 2026 repeats the academic rules in 5 pages with different clause numbers: a second 2026 source that must agree with the Handbook.
+- The 2023 PDF is 14.9 MB because every page is an image, so extraction time and memory in the indexer Job are dominated by OCR.
+- Five pages of the 2026 Rules Handbook have no text layer (58 pages, 53 with text); the extractor OCRs them too.
+
+## How the documents reach the indexer
+The fetched files and `_index.json` (file, `doc_version`, `superseded`) are copied into `indexer/corpus/` by `make images` and baked into the indexer image, so the Job is self-contained and never calls the university website. In CI a ConfigMap with the small fixture corpus is mounted over `/corpus` instead. The decision is explained in `docs/PIPELINE.md`.
