@@ -13,4 +13,4 @@ router = APIRouter(prefix="/api")
 @router.post("/ask", response_model=AskResponse)
 def ask(body: AskRequest, request: Request) -> AskResponse:
     state = request.app.state
-    return answer_question(body.question, state.retriever, state.provider, state.settings)
+    return answer_question(body.question, state.retriever, state.provider, state.settings, cache=state.cache)

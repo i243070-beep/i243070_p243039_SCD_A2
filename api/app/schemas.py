@@ -26,6 +26,9 @@ class Passage(BaseModel):
     section: str
     page: int | None = None
     score: float = Field(description="Similarity, higher is closer (1 - cosine distance).")
+    # True when the passage literally contains an exact token from the question (a clause number such as 1.21).
+    # Embeddings blur exact terms, so this is the lexical half of hybrid retrieval (section 5.2).
+    exact_match: bool = False
 
 
 class Citation(BaseModel):
@@ -62,3 +65,4 @@ class AskResponse(BaseModel):
     confidence: Literal["high", "medium", "low"]
     retrieved: list[RetrievedRef]
     provider: str
+    cached: bool = False        # true when the answer came from the semantic cache (the UI shows a chip)

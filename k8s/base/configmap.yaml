@@ -23,7 +23,7 @@ data:
 
   # Retrieval and generation
   TOP_K: "5"                          # chunks handed to the model
-  RELEVANCE_FLOOR: "0.35"             # below this best score the api abstains (tuned in section 5)
+  RELEVANCE_FLOOR: "0.72"             # below this best similarity the api abstains without calling the LLM (docs/PIPELINE.md)
   # Temperature 0.2: factual answers and JSON should be near-deterministic, but not 0 (section 3.4).
   TEMPERATURE: "0.2"
   LLM_MODEL: "gemini-2.5-flash"       # hosted model name (Google AI Studio, OpenAI-compatible API)
