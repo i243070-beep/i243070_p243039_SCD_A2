@@ -8,12 +8,17 @@ Headers, footers and table-of-contents pages are removed later, by `clean`.
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from html.parser import HTMLParser
 from typing import Any
 
 from .models import Document, Page
+
+# pdfminer warns "CropBox missing from /Page" once per page of many university PDFs; it is harmless
+# and would drown the Job's JSON log.
+logging.getLogger("pdfminer").setLevel(logging.ERROR)
 
 OCR_DPI = 200
 MIN_TEXT_CHARS = 20  # fewer non-space characters than this: the page has no usable text layer
