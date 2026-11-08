@@ -1,0 +1,25 @@
+# Apply order is handled by kubectl (Namespace first). secret.placeholder.yaml is deliberately NOT listed:
+# applying it would overwrite the real Secret created by `make secret`.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: rahbar
+resources:
+  - namespace.yaml
+  - serviceaccounts.yaml
+  - configmap.yaml
+  - chroma.yaml
+  - redis.yaml
+  - api.yaml
+  - ui.yaml
+  - ingress.yaml
+  - indexer.yaml
+  - networkpolicy.yaml
+  - hpa.yaml
+# Image tags are set per overlay or by CI with `kustomize edit set image`; never :latest.
+images:
+  - name: samullah/rahbar-api
+    newTag: dev
+  - name: samullah/rahbar-indexer
+    newTag: dev
+  - name: samullah/rahbar-ui
+    newTag: dev

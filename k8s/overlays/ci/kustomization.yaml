@@ -1,0 +1,48 @@
+# ci overlay: used by GitHub Actions (e2e-eval and the deploy smoke test). It indexes the tiny fixture
+# corpus instead of the real one, so CI runs in minutes. The workflow first runs:
+#   kubectl create configmap rahbar-fixtures --from-file=eval/fixtures -n rahbar
+# and this overlay mounts that ConfigMap over /corpus in the indexer Job (the same image, a different corpus).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: Job
+      name: indexer
+    patch: |-
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: corpus
+          configMap:
+            name: rahbar-fixtures
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: corpus
+          mountPath: /corpus
+          readOnly: true
+  - target:
+      kind: CronJob
+      name: reindex
+    patch: |-
+      - op: add
+        path: /spec/jobTemplate/spec/template/spec/volumes/-
+        value:
+          name: corpus
+          configMap:
+            name: rahbar-fixtures
+      - op: add
+        path: /spec/jobTemplate/spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: corpus
+          mountPath: /corpus
+          readOnly: true
+images:
+  - name: samullah/rahbar-api
+    newTag: ci
+  - name: samullah/rahbar-indexer
+    newTag: ci
+  - name: samullah/rahbar-ui
+    newTag: ci

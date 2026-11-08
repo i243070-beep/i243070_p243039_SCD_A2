@@ -1,0 +1,199 @@
+# Flat network closed (section 4.7): deny everything, then allow only the paths the architecture needs.
+#   ui      <- ingress controller
+#   api     <- ingress controller, ui
+#   chroma  <- api, indexer          (the ui can NOT reach chroma)
+#   redis   <- api
+#   api     -> chroma, redis, Ollama on the host, HTTPS to the hosted LLM
+#   indexer -> chroma, Ollama on the host
+#   everyone -> kube-dns (default-deny egress also blocks DNS, so it is allowed explicitly)
+# Enforced only when the cluster runs a CNI that implements NetworkPolicy: minikube --cni=calico.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: rahbar
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: rahbar
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-controller-to-ui
+  namespace: rahbar
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ui
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-and-ui-to-api
+  namespace: rahbar
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui
+      ports:
+        - protocol: TCP
+          port: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-and-indexer-to-chroma
+  namespace: rahbar
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: chroma
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: indexer
+      ports:
+        - protocol: TCP
+          port: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-to-redis
+  namespace: rahbar
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-egress
+  namespace: rahbar
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: chroma
+      ports:
+        - protocol: TCP
+          port: 8000
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Ollama on the Windows host (Docker Desktop route; see CONFIGMAP OLLAMA_URL)
+    - to:
+        - ipBlock:
+            cidr: 192.168.65.254/32
+      ports:
+        - protocol: TCP
+          port: 11434
+    # HTTPS to the hosted LLM (Google AI Studio): the public internet only, never the private ranges
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-indexer-egress
+  namespace: rahbar
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: indexer
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: chroma
+      ports:
+        - protocol: TCP
+          port: 8000
+    - to:
+        - ipBlock:
+            cidr: 192.168.65.254/32
+      ports:
+        - protocol: TCP
+          port: 11434

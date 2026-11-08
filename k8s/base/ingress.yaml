@@ -1,0 +1,29 @@
+# One host, two paths (section 4.1): / -> ui, /api -> api. nginx in the ui image does not proxy the API.
+# Needs `minikube addons enable ingress`; add "<ip> rahbar.local" to your hosts file, or send a Host header.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rahbar
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/part-of: rahbar
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: rahbar.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ui
+                port:
+                  number: 8080

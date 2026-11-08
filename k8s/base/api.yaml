@@ -1,0 +1,111 @@
+# api: the reader. 3 replicas, three probes with different jobs (section 4.3), requests and limits
+# justified with `kubectl top pods` (docs/evidence/), zero-unavailability rollouts (section 4.6).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: rahbar
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0          # a new pod must be Ready before an old one is removed
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+        app.kubernetes.io/part-of: rahbar
+    spec:
+      serviceAccountName: api
+      automountServiceAccountToken: false
+      # Time to finish in-flight requests after the preStop sleep, then SIGTERM.
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: samullah/rahbar-api:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: rahbar-config
+          env:
+            # Created from the command line by `make secret`. Optional so stub mode starts without it.
+            - name: LLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rahbar-secret
+                  key: LLM_API_KEY
+                  optional: true
+          # startupProbe: has the process finished booting? Liveness and readiness wait while it runs.
+          startupProbe:
+            httpGet: { path: /healthz, port: 8000 }
+            failureThreshold: 30
+            periodSeconds: 2
+          # livenessProbe: is the process still working? Failure -> kubelet restarts the container.
+          # /healthz touches no dependency, so a slow Chroma can never cause a restart storm.
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8000 }
+            periodSeconds: 20
+            failureThreshold: 3
+          # readinessProbe: can it take traffic now? Failure -> removed from the Service, not restarted.
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8000 }
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              # Keep serving while the endpoint is removed from the Service, then stop.
+              exec:
+                command: ["sleep", "10"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: api
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
