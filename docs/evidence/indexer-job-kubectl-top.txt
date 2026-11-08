@@ -1,0 +1,109 @@
+# Indexer Job: real run on minikube (3 GB), prod overlay, 8 November 2026
+# Command: kubectl apply -k k8s/overlays/prod; samples taken every 4 s with:
+#   kubectl -n rahbar top pods -l app.kubernetes.io/name=indexer --no-headers
+# Columns: time, pod, CPU, memory
+
+14:21:23 indexer-r5svz   978m   218Mi   
+14:21:28 indexer-r5svz   978m   218Mi   
+14:21:32 indexer-r5svz   978m   218Mi   
+14:21:36 indexer-r5svz   978m   218Mi   
+14:21:41 indexer-r5svz   978m   218Mi   
+14:21:45 indexer-r5svz   978m   218Mi   
+14:21:49 indexer-r5svz   978m   218Mi   
+14:21:54 indexer-r5svz   978m   218Mi   
+14:21:58 indexer-r5svz   978m   218Mi   
+14:22:02 indexer-r5svz   978m   218Mi   
+14:22:07 indexer-r5svz   978m   218Mi   
+14:22:11 indexer-r5svz   978m   218Mi   
+14:22:15 indexer-r5svz   978m   218Mi   
+14:22:20 indexer-r5svz   978m   218Mi   
+14:22:24 indexer-r5svz   997m   224Mi   
+14:22:28 indexer-r5svz   997m   224Mi   
+14:22:33 indexer-r5svz   997m   224Mi   
+14:22:37 indexer-r5svz   997m   224Mi   
+14:22:41 indexer-r5svz   997m   224Mi   
+14:22:46 indexer-r5svz   997m   224Mi   
+14:22:50 indexer-r5svz   997m   224Mi   
+14:22:54 indexer-r5svz   997m   224Mi   
+14:22:59 indexer-r5svz   997m   224Mi   
+14:23:03 indexer-r5svz   997m   224Mi   
+14:23:07 indexer-r5svz   997m   224Mi   
+14:23:12 indexer-r5svz   997m   224Mi   
+14:23:16 indexer-r5svz   997m   224Mi   
+14:23:20 indexer-r5svz   997m   237Mi   
+14:23:25 indexer-r5svz   997m   237Mi   
+14:23:29 indexer-r5svz   997m   237Mi   
+14:23:33 indexer-r5svz   997m   237Mi   
+14:23:38 indexer-r5svz   997m   237Mi   
+14:23:42 indexer-r5svz   997m   237Mi   
+14:23:46 indexer-r5svz   997m   237Mi   
+14:23:50 indexer-r5svz   997m   237Mi   
+14:23:55 indexer-r5svz   997m   237Mi   
+14:23:59 indexer-r5svz   997m   237Mi   
+14:24:03 indexer-r5svz   997m   237Mi   
+14:24:08 indexer-r5svz   997m   237Mi   
+14:24:12 indexer-r5svz   997m   237Mi   
+14:24:17 indexer-r5svz   997m   237Mi   
+14:24:21 indexer-r5svz   992m   364Mi   
+14:24:25 indexer-r5svz   992m   364Mi   
+14:24:30 indexer-r5svz   992m   364Mi   
+14:24:34 indexer-r5svz   992m   364Mi   
+14:24:38 indexer-r5svz   992m   364Mi   
+14:24:42 indexer-r5svz   992m   364Mi   
+14:24:47 indexer-r5svz   992m   364Mi   
+14:24:51 indexer-r5svz   992m   364Mi   
+14:24:56 indexer-r5svz   992m   364Mi   
+14:25:00 indexer-r5svz   992m   364Mi   
+14:25:04 indexer-r5svz   992m   364Mi   
+14:25:09 indexer-r5svz   992m   364Mi   
+14:25:13 indexer-r5svz   992m   364Mi   
+14:25:18 indexer-r5svz   992m   364Mi   
+14:25:22 indexer-r5svz   997m   457Mi   
+14:25:26 indexer-r5svz   997m   457Mi   
+14:25:31 indexer-r5svz   997m   457Mi   
+14:25:35 indexer-r5svz   997m   457Mi   
+14:25:39 indexer-r5svz   997m   457Mi   
+14:25:44 indexer-r5svz   997m   457Mi   
+14:25:48 indexer-r5svz   997m   457Mi   
+14:25:52 indexer-r5svz   997m   457Mi   
+14:25:57 indexer-r5svz   997m   457Mi   
+14:26:01 indexer-r5svz   997m   457Mi   
+14:26:05 indexer-r5svz   997m   457Mi   
+14:26:10 indexer-r5svz   997m   457Mi   
+14:26:14 indexer-r5svz   997m   457Mi   
+14:26:18 indexer-r5svz   997m   457Mi   
+14:26:23 indexer-r5svz   484m   360Mi   
+14:26:27 indexer-r5svz   484m   360Mi   
+14:26:32 indexer-r5svz   484m   360Mi   
+14:26:36 indexer-r5svz   484m   360Mi   
+14:26:40 indexer-r5svz   484m   360Mi   
+14:26:44 indexer-r5svz   484m   360Mi   
+14:26:49 indexer-r5svz   484m   360Mi   
+14:26:53 indexer-r5svz   484m   360Mi   
+14:26:57 indexer-r5svz   484m   360Mi   
+14:27:02 indexer-r5svz   484m   360Mi   
+14:27:06 indexer-r5svz   484m   360Mi   
+14:27:11 indexer-r5svz   484m   360Mi   
+14:27:15 indexer-r5svz   484m   360Mi   
+14:27:20 indexer-r5svz   484m   360Mi   
+14:27:24 indexer-r5svz   64m   402Mi   
+14:27:28 indexer-r5svz   64m   402Mi   
+14:27:33 indexer-r5svz   64m   402Mi   
+14:27:37 indexer-r5svz   64m   402Mi   
+
+# Peak memory sample: 457 Mi (limit 768 Mi, margin 311 Mi)
+# Job result: Completed, 0 restarts, no OOMKill (an OOMKill would show exit code 137)
+
+# Job log (per document and totals):
+{"ts": "2026-11-08T14:20:31Z", "logger": "rahbar.indexer", "msg": "indexer starting", "dummy": false, "embed_model": "nomic-embed-text", "collection": "rahbar", "chroma": "chroma:8000", "pod": "indexer-r5svz"}
+{"ts": "2026-11-08T14:23:37Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "undergraduate-academic-rules-aug-2023.pdf", "doc_version": "2023-08", "superseded": true, "pages": 26, "ocr_pages": 24, "pages_dropped_by_clean": 0, "chunks": 78, "amplification": 0.99, "seconds": 185.2}
+{"ts": "2026-11-08T14:23:58Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "academic-rules-handbook-jun-2026.pdf", "doc_version": "2026-06", "superseded": false, "pages": 58, "ocr_pages": 5, "pages_dropped_by_clean": 2, "chunks": 174, "amplification": 1.02, "seconds": 20.4}
+{"ts": "2026-11-08T14:23:59Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "prospectus-2026-academic-rules-and-regulations.pdf", "doc_version": "2026", "superseded": false, "pages": 5, "ocr_pages": 0, "pages_dropped_by_clean": 0, "chunks": 20, "amplification": 1.1, "seconds": 1.8}
+{"ts": "2026-11-08T14:24:20Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "student-handbook-jun-2026.pdf", "doc_version": "2026-06", "superseded": false, "pages": 64, "ocr_pages": 4, "pages_dropped_by_clean": 0, "chunks": 256, "amplification": 1.03, "seconds": 20.9}
+{"ts": "2026-11-08T14:24:26Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "annual-report-2019-20.pdf", "doc_version": "2019-20", "superseded": true, "pages": 33, "ocr_pages": 0, "pages_dropped_by_clean": 0, "chunks": 183, "amplification": 1.03, "seconds": 5.9}
+{"ts": "2026-11-08T14:24:42Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "annual-report-2023-24.pdf", "doc_version": "2023-24", "superseded": false, "pages": 85, "ocr_pages": 0, "pages_dropped_by_clean": 1, "chunks": 355, "amplification": 1.03, "seconds": 15.5}
+{"ts": "2026-11-08T14:24:42Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "fee-structure-page.html", "doc_version": "2026-27", "superseded": false, "pages": 1, "ocr_pages": 0, "pages_dropped_by_clean": 0, "chunks": 10, "amplification": 0.99, "seconds": 0.1}
+{"ts": "2026-11-08T14:24:42Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "grading-page.html", "doc_version": "2026", "superseded": false, "pages": 1, "ocr_pages": 0, "pages_dropped_by_clean": 0, "chunks": 6, "amplification": 0.99, "seconds": 0.0}
+{"ts": "2026-11-08T14:25:36Z", "logger": "rahbar.indexer", "msg": "document indexed", "source": "faculty-entrepreneurship-and-technical-start-ups-policy.pdf", "doc_version": "2022-05", "superseded": false, "pages": 8, "ocr_pages": 8, "pages_dropped_by_clean": 0, "chunks": 38, "amplification": 1.03, "seconds": 53.8}
+{"ts": "2026-11-08T14:27:16Z", "logger": "rahbar.indexer", "msg": "embedded", "chunks": 1120, "dimension": 768, "model": "nomic-embed-text", "seconds": 100.5}
+{"ts": "2026-11-08T14:27:35Z", "logger": "rahbar.indexer", "msg": "indexer finished", "chunks": 1120, "seconds": 423.6}

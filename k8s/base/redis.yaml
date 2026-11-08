@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: redis-data
+  name: cache-data           # the PVC named in the architecture diagram
   namespace: rahbar
   labels:
     app.kubernetes.io/name: redis
@@ -89,7 +89,7 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: redis-data
+            claimName: cache-data
 ---
 apiVersion: v1
 kind: Service
