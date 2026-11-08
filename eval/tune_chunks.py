@@ -113,11 +113,16 @@ def main() -> int:
     parser.add_argument("--configs", default="200:25,400:50,800:100")
     parser.add_argument("--cache-dir", type=Path, default=Path("/tmp/rahbar-tuning-cache"))
     parser.add_argument("--out", type=Path, default=HERE / "chunk-tuning" / "results.json")
+    parser.add_argument("--extract-only", action="store_true",
+                        help="only extract and cache the documents (OCR needs tesseract); no embedding")
     args = parser.parse_args()
 
     questions = yaml.safe_load(args.golden.read_text(encoding="utf-8"))["questions"]
     print("loading documents (OCR is cached after the first run)...", flush=True)
     docs = load_documents(args.corpus, args.cache_dir)
+    if args.extract_only:
+        print(f"cached {len(docs)} cleaned documents in {args.cache_dir}")
+        return 0
     with httpx.Client(timeout=180.0) as client:
         qvecs = embed_all(client, args.ollama, args.model, [q["question"] for q in questions], "search_query: ")
         results = []

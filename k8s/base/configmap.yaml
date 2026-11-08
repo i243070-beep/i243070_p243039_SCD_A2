@@ -34,7 +34,7 @@ data:
   # Semantic cache (Redis)
   REDIS_HOST: "redis"
   REDIS_PORT: "6379"
-  CACHE_THRESHOLD: "0.92"             # cosine similarity needed for a hit (chosen with data)
+  CACHE_THRESHOLD: "0.95"             # cosine similarity needed for a hit: the lowest value with zero false hits (docs/PIPELINE.md)
 
   # Ollama on the Windows host, used for embeddings (and for ollama-host mode).
   # An IP, not a name: Docker Desktop's route to Windows is 192.168.65.254 (= host.docker.internal on
