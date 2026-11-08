@@ -66,7 +66,7 @@ spec:
               drop:
                 - ALL
           volumeMounts:
-            - name: data
+            - name: chroma-data
               mountPath: /data
             - name: tmp
               mountPath: /tmp
@@ -75,7 +75,7 @@ spec:
           emptyDir: {}
   volumeClaimTemplates:
     - metadata:
-        name: data
+        name: chroma-data        # the PVC named in the architecture diagram: chroma-data-chroma-0
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:
