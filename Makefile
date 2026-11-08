@@ -4,6 +4,8 @@
 SHELL := /bin/bash
 NS ?= rahbar
 TAG ?= dev
+# Docker Hub repository prefix: images are samullah/rahbar-api, -indexer and -ui (the names in k8s/base)
+REPO ?= samullah/rahbar
 PY ?= python3
 VENV ?= .venv
 BIN := $(abspath $(VENV))/bin
@@ -36,17 +38,20 @@ dev: ## run the API with stubs on http://localhost:8000, serving the chat UI too
 	cd api && SERVE_UI_DIR=../ui RETRIEVER=stub LLM_PROVIDER=stub $(BIN)/uvicorn app.main:app --reload --port 8000
 
 cluster: ## start minikube with Calico, then enable metrics-server and ingress
-	minikube start --driver=docker --cni=calico --memory=6144 --cpus=4
+	# 3 GB is enough with a hosted LLM and Ollama (embeddings only) on the host; raise it for in-cluster Ollama.
+	minikube start --driver=docker --cni=calico --memory=3072 --cpus=4
 	minikube addons enable metrics-server
 	minikube addons enable ingress
 
-images: ## build the three images and load them into minikube (needs yours: Dockerfiles)
-	docker build -t rahbar-api:$(TAG) api
-	docker build -t rahbar-indexer:$(TAG) indexer
-	docker build -t rahbar-ui:$(TAG) ui
-	minikube image load rahbar-api:$(TAG)
-	minikube image load rahbar-indexer:$(TAG)
-	minikube image load rahbar-ui:$(TAG)
+images: ## build the three images and load them into minikube
+	# bake the fetched corpus (if any) into the indexer image; PDFs are never committed
+	mkdir -p indexer/corpus && if [ -d corpus/raw ]; then cp -r corpus/raw/. indexer/corpus/; fi
+	docker build -t $(REPO)-api:$(TAG) api
+	docker build -t $(REPO)-indexer:$(TAG) indexer
+	docker build -t $(REPO)-ui:$(TAG) ui
+	minikube image load $(REPO)-api:$(TAG)
+	minikube image load $(REPO)-indexer:$(TAG)
+	minikube image load $(REPO)-ui:$(TAG)
 
 apply: ## apply the dev overlay (needs yours: manifests)
 	kubectl apply -k k8s/overlays/dev

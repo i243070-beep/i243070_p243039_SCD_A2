@@ -1,0 +1,35 @@
+# dev overlay: the whole system around the stubs (week 1 of the starter kit).
+# RETRIEVER=stub and LLM_PROVIDER=stub need no model; the indexer writes three fake chunks with
+# `--dummy`, recorded in Chroma as embedding model `dummy-768`, so EMBED_MODEL must match it.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: ConfigMap
+      name: rahbar-config
+    patch: |-
+      - op: replace
+        path: /data/RETRIEVER
+        value: "stub"
+      - op: replace
+        path: /data/LLM_PROVIDER
+        value: "stub"
+      - op: replace
+        path: /data/EMBED_MODEL
+        value: "dummy-768"
+  - target:
+      kind: Job
+      name: indexer
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value: ["--dummy"]
+  - target:
+      kind: CronJob
+      name: reindex
+    patch: |-
+      - op: replace
+        path: /spec/jobTemplate/spec/template/spec/containers/0/args
+        value: ["--dummy"]

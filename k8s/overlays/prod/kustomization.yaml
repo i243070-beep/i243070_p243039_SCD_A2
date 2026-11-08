@@ -1,0 +1,14 @@
+# prod overlay: the real pipeline (Chroma retriever, hosted LLM, nomic-embed-text, real corpus).
+# The base already holds these values; prod only pins the image tags. CI replaces the tags with the
+# commit SHA: `kustomize edit set image samullah/rahbar-api=samullah/rahbar-api:<sha>`.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+images:
+  - name: samullah/rahbar-api
+    newTag: dev
+  - name: samullah/rahbar-indexer
+    newTag: dev
+  - name: samullah/rahbar-ui
+    newTag: dev

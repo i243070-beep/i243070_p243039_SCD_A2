@@ -1,0 +1,47 @@
+# One ConfigMap read by BOTH the api and the indexer (section 4.1, 4.4): EMBED_MODEL has a single
+# source of truth, so the two programs cannot silently disagree about the embedding model.
+# The dev overlay switches this to stubs; the prod overlay uses the real pipeline.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rahbar-config
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/part-of: rahbar
+data:
+  # Which implementations the api loads (api/app/config.py)
+  RETRIEVER: "chroma"                 # stub | chroma
+  LLM_PROVIDER: "hosted"              # stub | ollama-host | ollama-incluster | hosted
+
+  # The embedding pin: indexer and api must read this same key (section 4.4).
+  EMBED_MODEL: "nomic-embed-text"
+
+  # Vector store (the chroma Service name, port and collection)
+  CHROMA_HOST: "chroma"
+  CHROMA_PORT: "8000"
+  CHROMA_COLLECTION: "rahbar"
+
+  # Retrieval and generation
+  TOP_K: "5"                          # chunks handed to the model
+  RELEVANCE_FLOOR: "0.35"             # below this best score the api abstains (tuned in section 5)
+  # Temperature 0.2: factual answers and JSON should be near-deterministic, but not 0 (section 3.4).
+  TEMPERATURE: "0.2"
+  LLM_MODEL: "gemini-2.5-flash"       # hosted model name (Google AI Studio, OpenAI-compatible API)
+  HOSTED_BASE_URL: "https://generativelanguage.googleapis.com/v1beta/openai"
+
+  # Semantic cache (Redis)
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  CACHE_THRESHOLD: "0.92"             # cosine similarity needed for a hit (chosen with data)
+
+  # Ollama on the Windows host, used for embeddings (and for ollama-host mode).
+  # An IP, not a name: Docker Desktop's route to Windows is 192.168.65.254 (= host.docker.internal on
+  # the minikube node), but pods resolve names through CoreDNS, which does not know that name.
+  OLLAMA_URL: "http://192.168.65.254:11434"
+
+  # Indexer (chunk size and overlap are counted in words; see docs/PIPELINE.md)
+  CHUNK_SIZE: "400"
+  CHUNK_OVERLAP: "50"
+  CORPUS_DIR: "/corpus"
+
+  LOG_LEVEL: "INFO"

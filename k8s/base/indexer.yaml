@@ -1,0 +1,119 @@
+# indexer: the ONLY writer to Chroma (section 4.2). A one-shot Job that exits, plus a weekly CronJob
+# with the same image and arguments. Re-index without a redeploy:
+#   kubectl create job --from=cronjob/reindex manual-reindex-1 -n rahbar
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: indexer
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: indexer
+    app.kubernetes.io/part-of: rahbar
+spec:
+  backoffLimit: 3                 # Kubernetes retries a failed index build up to 3 times
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: indexer
+        app.kubernetes.io/part-of: rahbar
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: indexer
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: indexer
+          image: samullah/rahbar-indexer:dev
+          imagePullPolicy: IfNotPresent
+          # `command` is spelled out because `args` alone would REPLACE the image's CMD.
+          command: ["python", "-m", "pipeline.run"]
+          args: []                # the dev overlay adds ["--dummy"]
+          envFrom:
+            - configMapRef:
+                name: rahbar-config
+          # Embedding a long PDF holds far more memory than serving a query (OOMKilled = exit 137).
+          # Limit justified with `kubectl top pods` in docs/evidence/.
+          resources:
+            requests:
+              cpu: 250m
+              memory: 384Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: reindex
+  namespace: rahbar
+  labels:
+    app.kubernetes.io/name: reindex
+    app.kubernetes.io/part-of: rahbar
+spec:
+  schedule: "0 3 * * 0"           # weekly: Sunday 03:00
+  concurrencyPolicy: Forbid       # never two writers at once
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: indexer
+            app.kubernetes.io/part-of: rahbar
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: indexer
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: indexer
+              image: samullah/rahbar-indexer:dev
+              imagePullPolicy: IfNotPresent
+              command: ["python", "-m", "pipeline.run"]
+              args: []            # the dev overlay adds ["--dummy"]
+              envFrom:
+                - configMapRef:
+                    name: rahbar-config
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 384Mi
+                limits:
+                  cpu: "1"
+                  memory: 768Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
