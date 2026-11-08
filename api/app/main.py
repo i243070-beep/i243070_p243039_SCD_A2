@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 import uuid
 from collections.abc import AsyncIterator
@@ -20,7 +21,11 @@ from .config import get_settings
 from .logjson import configure_logging, request_id_var
 from .providers.llm import get_provider
 from .retrieval import get_retriever
+from .retrieval.chroma import ChromaRetriever
 from .routes import ask, health, metrics
+from .services.cache import SemanticCache
+from .services.deps import Dependencies
+from .services.readiness import check_readiness
 
 log = logging.getLogger("rahbar.api")
 
@@ -30,10 +35,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     configure_logging(settings.log_level)
     app.state.settings = settings
-    app.state.retriever = get_retriever(settings)
+    retriever = get_retriever(settings)
+    app.state.retriever = retriever
     app.state.provider = get_provider(settings)
-    # STARTER-TODO(4.4): compare the collection's embedding-model metadata with
-    # settings.embed_model here, and make /readyz fail on a mismatch.
+    # Connections are lazy: nothing below touches the network, so a slow Chroma cannot crash the pod
+    # (and liveness never depends on it). /readyz is where an unreachable dependency is reported.
+    deps = getattr(retriever, "deps", None) or Dependencies(settings)
+    app.state.deps = deps
+    app.state.cache = None
+    if isinstance(retriever, ChromaRetriever):  # the cache needs the real embedder and the index id
+        app.state.cache = SemanticCache(deps, retriever.embedder, settings.cache_threshold,
+                                        lambda: retriever.index_info().index_id)
+    # The embedding pin (section 4.4): compare the collection's embedding model with EMBED_MODEL and log exactly
+    # what conflicts. Done in the background so startup never waits on Chroma; /readyz re-checks on every probe
+    # and answers 503 on a mismatch, so a pod with the wrong model is never given traffic.
+    threading.Thread(target=check_readiness, args=(settings, deps), daemon=True).start()
     # This process only reads the index. The indexer Job writes it.
     log.info(
         "api started",

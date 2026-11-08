@@ -68,6 +68,7 @@ spec:
           readinessProbe:
             httpGet: { path: /readyz, port: 8000 }
             periodSeconds: 10
+            timeoutSeconds: 5          # /readyz makes several network calls; the 1 s default timed out under load
             failureThreshold: 3
           lifecycle:
             preStop:

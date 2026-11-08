@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+
+from ..services.readiness import check_readiness
 
 router = APIRouter()
 
@@ -14,9 +17,9 @@ def healthz() -> dict[str, str]:
 
 
 @router.get("/readyz")
-def readyz(request: Request, response: Response) -> dict[str, object]:
-    # STARTER-TODO(4.3, 4.4): return 503, naming the failed dependency, unless Chroma is
-    # reachable, the collection exists and is non-empty, Redis is reachable, and the
-    # collection's embedding model matches EMBED_MODEL. Until then this always says yes,
-    # which is exactly the lie section 4.2 warns about.
-    return {"status": "ready", "checks": {}}
+def readyz(request: Request) -> JSONResponse:
+    """Can this pod take traffic now? 200 only if Chroma is reachable, the collection exists and is
+    non-empty, the collection's embedding model matches EMBED_MODEL, and Redis is reachable. Otherwise 503 naming
+    the dependency that failed; the pod is withheld from the Service but not restarted."""
+    result = check_readiness(request.app.state.settings, request.app.state.deps)
+    return JSONResponse(status_code=200 if result.ok else 503, content=result.body())
