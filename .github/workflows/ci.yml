@@ -118,7 +118,7 @@ jobs:
           push: false
           tags: scan/${{ matrix.image }}:${{ github.sha }}
           cache-from: type=gha,scope=${{ matrix.image }}
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: scan/${{ matrix.image }}:${{ github.sha }}
           severity: HIGH,CRITICAL
@@ -171,7 +171,7 @@ jobs:
           echo "Ollama on the runner is reachable from the pods at $GATEWAY"
           kubectl create namespace rahbar
           kubectl -n rahbar create configmap rahbar-fixtures --from-file=eval/fixtures
-          kubectl apply -k k8s/overlays/ci
+          kubectl kustomize k8s/overlays/ci | sed "s/192.168.65.254/${GATEWAY}/g" | kubectl apply -f -
           kubectl -n rahbar patch configmap rahbar-config --type merge \
             -p "{\"data\":{\"OLLAMA_URL\":\"http://${GATEWAY}:11434\",\"LLM_TIMEOUT\":\"240\"}}"
           kubectl -n rahbar rollout restart deployment/api
