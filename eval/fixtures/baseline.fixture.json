@@ -1,0 +1,87 @@
+{
+  "recall_at_3": 1.0,
+  "recall_at_5": 1.0,
+  "recall_at_3_by_type": {
+    "exact": 1.0,
+    "injection": 1.0,
+    "ordinary": 1.0,
+    "version": 1.0
+  },
+  "recall_at_5_by_type": {
+    "exact": 1.0,
+    "injection": 1.0,
+    "ordinary": 1.0,
+    "version": 1.0
+  },
+  "citation_validity": 1.0,
+  "citations_checked": 4,
+  "abstention_correctness": 1.0,
+  "wrongly_answered": [],
+  "answer_rate_on_answerable": 1.0,
+  "superseded_leak_rate": null,
+  "per_question": [
+    {
+      "id": "f01",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 38.4
+    },
+    {
+      "id": "f02",
+      "type": "version",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 23.03
+    },
+    {
+      "id": "f03",
+      "type": "version",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 26.62
+    },
+    {
+      "id": "f04",
+      "type": "exact",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 20.72
+    },
+    {
+      "id": "f05",
+      "type": "abstain",
+      "recall_at_3": null,
+      "recall_at_5": null,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 0.06
+    },
+    {
+      "id": "f06",
+      "type": "injection",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 26.85
+    }
+  ],
+  "n_questions": 6,
+  "golden": "eval/fixtures/golden.fixture.yaml",
+  "questions": 6
+}

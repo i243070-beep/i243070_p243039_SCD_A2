@@ -91,6 +91,14 @@ def test_citation_check_keeps_matches_drops_fabrications_and_repairs_the_page() 
     assert [(c.source, c.page) for c in valid] == [("rules.pdf", 24)]                    # the retrieved page wins
 
 
+def test_a_citation_naming_the_evidence_number_resolves_to_that_retrieved_passage() -> None:
+    ans = answer_ok(citations=[Citation(source="EVIDENCE 1", section="made up", page=3),
+                               Citation(source="EVIDENCE 7", section="out of range", page=1)])
+    valid, rejected = check_citations(ans, [passage()])
+    assert [(c.source, c.section) for c in valid] == [("rules.pdf", "Academic Warning/Probation")]
+    assert rejected == 1                                                                 # number 7 was never retrieved
+
+
 def test_a_returned_citation_always_matches_a_retrieved_passage() -> None:
     r = ask([passage()], FakeProvider(answer_ok(citations=[
         Citation(source="rules.pdf", section="Academic Warning/Probation", page=24),

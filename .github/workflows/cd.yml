@@ -1,0 +1,156 @@
+# CD: runs on a push to main (section 6): test, then build-push, then deploy to an ephemeral cluster and smoke-test.
+# needs: gates every job that publishes or deploys; images are tagged with the commit SHA, never :latest, so
+# "what is running?" has a one-word answer you can paste into `git show`.
+# Credentials come from GitHub Secrets: DOCKERHUB_USERNAME and DOCKERHUB_TOKEN (an access token, never a password).
+name: cd
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHON_VERSION: "3.12"
+  KUSTOMIZE_VERSION: "5.4.3"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            api/requirements-dev.txt
+            indexer/requirements-dev.txt
+      - run: pip install -r api/requirements-dev.txt -r indexer/requirements-dev.txt
+      - run: ruff check api indexer eval corpus
+      - run: cd api && mypy app
+      - run: cd indexer && mypy pipeline
+      - run: cd api && pytest --cov=app --cov-fail-under=60
+      - run: cd indexer && pytest
+      - run: pytest eval/tests
+
+  build-push:
+    # Publishes images, so it only runs after the tests passed.
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [api, indexer, ui]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image }}
+          push: true
+          # the commit SHA is the only tag
+          tags: samullah/rahbar-${{ matrix.image }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    # Deploys what build-push published: an ephemeral kind cluster pulls the SHA-tagged images from Docker Hub.
+    needs: build-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: install kustomize
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 -o /tmp/kustomize.tgz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+          sudo tar xzf /tmp/kustomize.tgz -C /usr/local/bin kustomize
+
+      - name: install Ollama on the runner and pull the pinned models
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 -o /tmp/ollama-install.sh https://ollama.com/install.sh \
+               && OLLAMA_VERSION=0.40.15 sh /tmp/ollama-install.sh; then break; fi
+            echo "Ollama install attempt $attempt failed; retrying in 30s"; sleep 30
+            [ "$attempt" = 5 ] && exit 1
+          done
+          sudo systemctl stop ollama || true
+          OLLAMA_HOST=0.0.0.0:11434 nohup ollama serve > "$RUNNER_TEMP/ollama.log" 2>&1 &
+          for i in $(seq 1 60); do curl -fs http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done
+          for i in 1 2 3 4 5; do ollama pull nomic-embed-text && break; sleep 20; done
+          for i in 1 2 3 4 5; do ollama pull llama3.2:3b && break; sleep 20; done
+
+      - name: create a kind cluster with an ingress controller
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 -o /tmp/kind https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
+          sudo install -m 0755 /tmp/kind /usr/local/bin/kind
+          kind version
+          kind create cluster --name rahbar --config .github/kind-config.yaml --wait 120s
+
+      - name: install ingress-nginx for kind
+        run: |
+          set -euo pipefail
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.1/deploy/static/provider/kind/deploy.yaml
+          kubectl -n ingress-nginx wait --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=240s
+
+      - name: deploy the commit-SHA images with the ci overlay (fixture corpus)
+        run: |
+          set -euo pipefail
+          GATEWAY=$(docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Gateway | test("^[0-9.]+$")) | .Gateway' | head -1)
+          cd k8s/overlays/ci
+          for name in api indexer ui; do
+            kustomize edit set image "samullah/rahbar-$name=samullah/rahbar-$name:${GITHUB_SHA}"
+          done
+          cd ../../..
+          kubectl create namespace rahbar
+          kubectl -n rahbar create configmap rahbar-fixtures --from-file=eval/fixtures
+          kubectl kustomize k8s/overlays/ci | sed "s/192.168.65.254/${GATEWAY}/g" | kubectl apply -f -
+          kubectl -n rahbar patch configmap rahbar-config --type merge \
+            -p "{\"data\":{\"OLLAMA_URL\":\"http://${GATEWAY}:11434\",\"LLM_TIMEOUT\":\"240\"}}"
+          kubectl -n rahbar rollout restart deployment/api
+          echo "deployed image tag: ${GITHUB_SHA}"
+
+      - name: wait for the indexer Job and the rollouts
+        run: |
+          set -euo pipefail
+          kubectl -n rahbar wait --for=condition=complete job/indexer --timeout=900s
+          kubectl -n rahbar rollout status statefulset/chroma --timeout=300s
+          kubectl -n rahbar rollout status deployment/redis --timeout=300s
+          kubectl -n rahbar rollout status deployment/api --timeout=600s
+          kubectl -n rahbar rollout status deployment/ui --timeout=300s
+          kubectl -n rahbar get pods -o wide
+
+      - name: smoke test through the Ingress
+        run: |
+          set -euo pipefail
+          code=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: rahbar.local" http://localhost/)
+          echo "GET / -> $code"; test "$code" = "200"
+          resp=$(curl -fsS -m 300 -H "Host: rahbar.local" -H "Content-Type: application/json" \
+            -d '{"question":"When is a student placed on academic warning?"}' http://localhost/api/ask)
+          echo "$resp" | jq '{request_id, answered_from_context, provider, citations: (.citations|length), retrieved: (.retrieved|length)}'
+          echo "$resp" | jq -e '(.answer | length > 0) and (.request_id | length > 0) and (.retrieved | length > 0)' >/dev/null
+
+      - name: evidence on failure (pods, events, logs)
+        if: failure()
+        run: |
+          kubectl -n rahbar get pods -o wide || true
+          kubectl -n rahbar get events --sort-by=.lastTimestamp | tail -25 || true
+          kubectl -n rahbar logs job/indexer --tail=40 || true
+          kubectl -n rahbar logs deployment/api --tail=60 || true
+          tail -20 "$RUNNER_TEMP/ollama.log" || true

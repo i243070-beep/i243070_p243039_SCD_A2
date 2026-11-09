@@ -1,0 +1,116 @@
+{
+  "golden": "golden.yaml",
+  "model": "nomic-embed-text",
+  "configs": [
+    {
+      "size": 200,
+      "overlap": 25,
+      "chunks": 1303,
+      "amplification": 1.066,
+      "hybrid": {
+        "recall_at_3": 0.889,
+        "recall_at_5": 0.889,
+        "recall_at_5_by_type": {
+          "exact": 1.0,
+          "injection": 1.0,
+          "ordinary": 0.9,
+          "version": 0.75
+        },
+        "missed": [
+          "q02",
+          "q13"
+        ]
+      },
+      "vector_only": {
+        "recall_at_3": 0.833,
+        "recall_at_5": 0.833,
+        "recall_at_5_by_type": {
+          "exact": 0.667,
+          "injection": 1.0,
+          "ordinary": 0.9,
+          "version": 0.75
+        },
+        "missed": [
+          "q02",
+          "q13",
+          "q15"
+        ]
+      },
+      "seconds": 14
+    },
+    {
+      "size": 400,
+      "overlap": 50,
+      "chunks": 1120,
+      "amplification": 1.03,
+      "hybrid": {
+        "recall_at_3": 0.889,
+        "recall_at_5": 0.889,
+        "recall_at_5_by_type": {
+          "exact": 1.0,
+          "injection": 1.0,
+          "ordinary": 0.9,
+          "version": 0.75
+        },
+        "missed": [
+          "q02",
+          "q13"
+        ]
+      },
+      "vector_only": {
+        "recall_at_3": 0.833,
+        "recall_at_5": 0.833,
+        "recall_at_5_by_type": {
+          "exact": 0.667,
+          "injection": 1.0,
+          "ordinary": 0.9,
+          "version": 0.75
+        },
+        "missed": [
+          "q02",
+          "q13",
+          "q15"
+        ]
+      },
+      "seconds": 11
+    },
+    {
+      "size": 800,
+      "overlap": 100,
+      "chunks": 1070,
+      "amplification": 1.006,
+      "hybrid": {
+        "recall_at_3": 0.833,
+        "recall_at_5": 0.833,
+        "recall_at_5_by_type": {
+          "exact": 1.0,
+          "injection": 1.0,
+          "ordinary": 0.8,
+          "version": 0.75
+        },
+        "missed": [
+          "q02",
+          "q10",
+          "q13"
+        ]
+      },
+      "vector_only": {
+        "recall_at_3": 0.778,
+        "recall_at_5": 0.778,
+        "recall_at_5_by_type": {
+          "exact": 0.667,
+          "injection": 1.0,
+          "ordinary": 0.8,
+          "version": 0.75
+        },
+        "missed": [
+          "q02",
+          "q10",
+          "q13",
+          "q15"
+        ]
+      },
+      "seconds": 11
+    }
+  ]
+}
