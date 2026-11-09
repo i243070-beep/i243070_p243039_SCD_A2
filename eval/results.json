@@ -1,0 +1,237 @@
+{
+  "recall_at_3": 0.8889,
+  "recall_at_5": 0.8889,
+  "recall_at_3_by_type": {
+    "exact": 1.0,
+    "injection": 1.0,
+    "ordinary": 0.9,
+    "version": 0.75
+  },
+  "recall_at_5_by_type": {
+    "exact": 1.0,
+    "injection": 1.0,
+    "ordinary": 0.9,
+    "version": 0.75
+  },
+  "citation_validity": 1.0,
+  "citations_checked": 12,
+  "abstention_correctness": 1.0,
+  "wrongly_answered": [],
+  "answer_rate_on_answerable": 0.6471,
+  "superseded_leak_rate": 0.0,
+  "per_question": [
+    {
+      "id": "q01",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 4.06
+    },
+    {
+      "id": "q02",
+      "type": "ordinary",
+      "recall_at_3": 0.0,
+      "recall_at_5": 0.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 5.96
+    },
+    {
+      "id": "q03",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 2.38
+    },
+    {
+      "id": "q04",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 0.11
+    },
+    {
+      "id": "q05",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 0.04
+    },
+    {
+      "id": "q06",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 1.65
+    },
+    {
+      "id": "q07",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 2.42
+    },
+    {
+      "id": "q08",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 4.15
+    },
+    {
+      "id": "q09",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 1.56
+    },
+    {
+      "id": "q10",
+      "type": "ordinary",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 2.71
+    },
+    {
+      "id": "q11",
+      "type": "version",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 0.03
+    },
+    {
+      "id": "q12",
+      "type": "version",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 1.67
+    },
+    {
+      "id": "q13",
+      "type": "version",
+      "recall_at_3": 0.0,
+      "recall_at_5": 0.0,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 2.04
+    },
+    {
+      "id": "q14",
+      "type": "version",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 1.58
+    },
+    {
+      "id": "q15",
+      "type": "exact",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 1.82
+    },
+    {
+      "id": "q16",
+      "type": "exact",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 0.05
+    },
+    {
+      "id": "q17",
+      "type": "exact",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": 1.0,
+      "answered_from_context": true,
+      "superseded_in_top5": false,
+      "seconds": 2.07
+    },
+    {
+      "id": "q18",
+      "type": "abstain",
+      "recall_at_3": null,
+      "recall_at_5": null,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 0.32
+    },
+    {
+      "id": "q19",
+      "type": "abstain",
+      "recall_at_3": null,
+      "recall_at_5": null,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 0.07
+    },
+    {
+      "id": "q20",
+      "type": "abstain",
+      "recall_at_3": null,
+      "recall_at_5": null,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 0.07
+    },
+    {
+      "id": "q21",
+      "type": "injection",
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "citation_validity": null,
+      "answered_from_context": false,
+      "superseded_in_top5": false,
+      "seconds": 1.59
+    }
+  ],
+  "n_questions": 21,
+  "golden": "eval/golden.yaml",
+  "questions": 21
+}

@@ -1,0 +1,43 @@
+# GET /metrics from a live API pod (minikube, 9 Nov 2026, after the evaluation run and the cache demo).
+# Application metrics only; the python_* / process_* runtime metrics are omitted. '_created' timestamps removed.
+# HELP rahbar_requests_total HTTP requests
+# TYPE rahbar_requests_total counter
+rahbar_requests_total{path="/healthz",status="200"} 5.0
+rahbar_requests_total{path="/readyz",status="200"} 10.0
+rahbar_requests_total{path="/api/ask",status="200"} 8.0
+# HELP rahbar_request_seconds HTTP request latency
+# TYPE rahbar_request_seconds histogram
+rahbar_request_seconds_count{path="/healthz"} 5.0
+rahbar_request_seconds_sum{path="/healthz"} 0.01755229500849964
+rahbar_request_seconds_count{path="/readyz"} 10.0
+rahbar_request_seconds_sum{path="/readyz"} 1.8503406509989873
+rahbar_request_seconds_count{path="/api/ask"} 8.0
+rahbar_request_seconds_sum{path="/api/ask"} 15.778072057000827
+# HELP rahbar_retrieval_seconds Time to embed the question and query Chroma
+# TYPE rahbar_retrieval_seconds histogram
+rahbar_retrieval_seconds_count 6.0
+rahbar_retrieval_seconds_sum 0.6397988149983576
+# HELP rahbar_generation_seconds Time spent in the LLM call, including the retry
+# TYPE rahbar_generation_seconds histogram
+rahbar_generation_seconds_count 5.0
+rahbar_generation_seconds_sum 14.628361479008163
+# HELP rahbar_cache_lookups_total Semantic cache lookups
+# TYPE rahbar_cache_lookups_total counter
+rahbar_cache_lookups_total{result="miss"} 6.0
+rahbar_cache_lookups_total{result="hit"} 2.0
+# HELP rahbar_cache_hit_ratio Cache hits divided by lookups that were attempted
+# TYPE rahbar_cache_hit_ratio gauge
+rahbar_cache_hit_ratio 0.25
+# HELP rahbar_abstentions_total Questions the corpus does not cover (answered_from_context false)
+# TYPE rahbar_abstentions_total counter
+rahbar_abstentions_total 3.0
+# HELP rahbar_fallbacks_total Times the safe canned answer was returned after validation failed
+# TYPE rahbar_fallbacks_total counter
+rahbar_fallbacks_total 0.0
+# HELP rahbar_citations_rejected_total Citations dropped because no retrieved chunk matched
+# TYPE rahbar_citations_rejected_total counter
+rahbar_citations_rejected_total 1.0
+# HELP rahbar_llm_tokens_total LLM tokens used
+# TYPE rahbar_llm_tokens_total counter
+rahbar_llm_tokens_total{direction="in"} 8839.0
+rahbar_llm_tokens_total{direction="out"} 638.0

@@ -148,3 +148,25 @@ and 6 look-alike pairs that must not (`"…for BS programs"` against `"…for MS
 
 The lowest paraphrase scores 0.846 and the highest look-alike scores 0.933, so **no threshold separates the groups**; this is the known weakness of semantic caches. A false hit serves a wrong answer to everyone, so we ship **0.95**, the lowest
 value with zero false hits, and accept a lower hit rate. The 0.92 setting was ruled out by the BS-against-MS/MBA false hit (the answer differs: 2.00 against 2.50). Never cached: follow-up questions, abstentions, fallbacks, and anything that failed validation.
+
+## Live evaluation (the committed baseline)
+`eval/run_eval.py` was run against the live stack (minikube, `llama3.2:3b` through Ollama, the real 1,120-chunk index) and wrote `eval/results.json`; the same numbers were committed as `eval/baseline.json`
+(the CI gate compares every later run with it). 21 golden questions:
+
+| Metric | Value | Gate |
+| --- | ---: | --- |
+| recall@3 / recall@5 | 0.889 / 0.889 | fails if recall@5 drops more than 5 points below the baseline |
+| recall@5 by type | ordinary 0.90, exact 1.00, version 0.75, injection 1.00 | |
+| Citation validity | 100% (12 citations checked) | fails below 95% |
+| Abstention correctness (3 must-abstain questions) | 100% | fails if any is answered from context |
+| Superseded document in the top 5 | 0% | |
+| Answered with a valid citation (17 answerable questions) | 11 (65%) | not gated |
+
+**What the run taught us, in order.** The first run answered only 5 of 17 (29%). The pod log (`"answered_from_context": false` with `"citations_rejected": 0`) and the raw model output showed the same two habits of the 3B model:
+it wrote `"EVIDENCE 1"` in the citation's `source` field instead of the file name, and it sometimes gave a correct, cited answer yet set `answered_from_context` to `false` (for example the fee refund question, which answered
+"80%"). Two changes, both in `api/app/services/grounding.py`: the system prompt now states that the flag must be true whenever the answer comes from the evidence and asks for complete sentences, and `check_citations`
+resolves `"EVIDENCE n"` to the n-th retrieved passage. The citation is still rebuilt from the retrieved passage, so a returned citation always matches a chunk retrieved for that request (tested). The second run answered 11 of 17.
+The six answerable questions still not answered (q07, q08, q10, q12, q13, q14) are a model-quality limit and are reported as such; they abstain safely instead of guessing. We did **not** edit the golden set or lower any threshold.
+Retrieval misses in both runs: q02 and q13 (the relevant passage is not in the top 5).
+
+The first run is not kept; it is described here because the comparison is the evidence for the change.

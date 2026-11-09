@@ -1,0 +1,7 @@
+# Semantic cache and request-id demo through the Ingress (live cluster, 9 Nov 2026).
+# Each request sent the header X-Request-ID: demo-cache-00N; the response body and response header echo it.
+# Threshold 0.95. Request 1 was already cached by the evaluation run; 3 (paraphrase) and 4 (look-alike) correctly missed.
+1 first ask: cached=True answered_from_context=True request_id=demo-cache-001 header=demo-cache-001 citations=[('academic-rules-handbook-jun-2026.pdf', 'Academic Warning/Probation')]
+2 same question again: cached=True answered_from_context=True request_id=demo-cache-002 header=demo-cache-002 citations=[('academic-rules-handbook-jun-2026.pdf', 'Academic Warning/Probation')]
+3 paraphrase: cached=False answered_from_context=True request_id=demo-cache-003 header=demo-cache-003 citations=[('academic-rules-handbook-jun-2026.pdf', 'Academic Warning/Probation')]
+4 look-alike (MS instead of undergrad): cached=False answered_from_context=True request_id=demo-cache-004 header=demo-cache-004 citations=[('grading-page.html', 'Warning/Probation')]
