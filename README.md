@@ -10,6 +10,9 @@ University rules are spread across scanned PDFs, handbooks and web pages, and so
 
 ## Architecture
 
+
+
+
 ```mermaid
 flowchart LR
   subgraph K8s["Kubernetes namespace: rahbar"]
