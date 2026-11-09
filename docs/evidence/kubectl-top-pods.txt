@@ -1,0 +1,21 @@
+# kubectl top pods in namespace rahbar, 2026-11-09T06:51Z (minikube, metrics-server), after the evaluation run (21 questions).
+# The requests and limits in k8s/base/*.yaml are justified against these numbers (see docs/ENGINEERING-NOTES.md).
+
+$ kubectl -n rahbar top pods --containers
+POD                      NAME     CPU(cores)   MEMORY(bytes)   
+api-7cdb9dd9ff-4tq5z     api      5m           75Mi            
+api-7cdb9dd9ff-88vq4     api      4m           75Mi            
+api-7cdb9dd9ff-x5prs     api      5m           74Mi            
+chroma-0                 chroma   3m           80Mi            
+redis-5ff5955fd4-rhmrx   redis    16m          15Mi            
+ui-55859b44-rtdns        ui       1m           2Mi             
+
+$ kubectl -n rahbar get pods -o custom-columns=POD:.metadata.name,CONTAINER:.spec.containers[*].name,CPU_REQ:.spec.containers[*].resources.requests.cpu,CPU_LIM:.spec.containers[*].resources.limits.cpu,MEM_REQ:.spec.containers[*].resources.requests.memory,MEM_LIM:.spec.containers[*].resources.limits.memory
+POD                      CONTAINER   CPU_REQ   CPU_LIM   MEM_REQ   MEM_LIM
+api-7cdb9dd9ff-4tq5z     api         100m      500m      128Mi     384Mi
+api-7cdb9dd9ff-88vq4     api         100m      500m      128Mi     384Mi
+api-7cdb9dd9ff-x5prs     api         100m      500m      128Mi     384Mi
+chroma-0                 chroma      100m      500m      192Mi     384Mi
+indexer-r5svz            indexer     250m      1         384Mi     768Mi
+redis-5ff5955fd4-rhmrx   redis       50m       200m      64Mi      128Mi
+ui-55859b44-rtdns        ui          25m       100m      32Mi      64Mi

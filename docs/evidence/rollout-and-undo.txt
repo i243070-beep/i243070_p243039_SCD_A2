@@ -1,0 +1,33 @@
+# Rollout and rollback of the ui deployment, 2026-11-09T06:53Z. v2 is a throw-away image whose page title is 'RAHBAR v2'.
+# After each rollout we wait 15 s (the preStop sleep is 10 s, so the old pod leaves the Service first) and read the title over 8 fresh connections.
+
+image before: samullah/rahbar-ui:dev
+titles served:
+      8 <title>RAHBAR</title>
+
+$ kubectl -n rahbar set image deployment/ui ui=samullah/rahbar-ui:v2
+deployment.apps/ui image updated
+
+$ kubectl -n rahbar rollout status deployment/ui
+Waiting for deployment "ui" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "ui" rollout to finish: 1 old replicas are pending termination...
+deployment "ui" successfully rolled out
+image now: samullah/rahbar-ui:v2
+titles served:
+      8 <title>RAHBAR v2</title>
+
+$ kubectl -n rahbar rollout history deployment/ui
+deployment.apps/ui 
+REVISION  CHANGE-CAUSE
+3         <none>
+4         <none>
+
+
+$ kubectl -n rahbar rollout undo deployment/ui
+deployment.apps/ui rolled back
+Waiting for deployment "ui" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "ui" rollout to finish: 1 old replicas are pending termination...
+deployment "ui" successfully rolled out
+image now: samullah/rahbar-ui:dev
+titles served:
+      8 <title>RAHBAR</title>

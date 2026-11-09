@@ -58,11 +58,11 @@ spec:
                 command: ["sleep", "5"]
           resources:
             requests:
-              cpu: 25m
-              memory: 32Mi
+              cpu: 10m   # kubectl top: 1m
+              memory: 16Mi   # kubectl top: 2Mi (static nginx)
             limits:
-              cpu: 100m
-              memory: 64Mi
+              cpu: 50m
+              memory: 32Mi   # 16x the observed 2Mi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

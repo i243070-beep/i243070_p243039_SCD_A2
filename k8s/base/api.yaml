@@ -77,11 +77,11 @@ spec:
                 command: ["sleep", "10"]
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 100m   # kubectl top: 5m idle but 89-125m per pod with 4 parallel questions (docs/evidence/kubectl-top-under-load.txt); the HPA target (70%) is of this
+              memory: 96Mi   # kubectl top: 70-75Mi per pod, idle and under load
             limits:
               cpu: 500m
-              memory: 384Mi
+              memory: 256Mi   # 3.4x the observed 75Mi; OOMKilled would be exit 137 with reason OOMKilled
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

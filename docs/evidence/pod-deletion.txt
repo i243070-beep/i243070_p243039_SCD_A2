@@ -1,0 +1,11 @@
+# One request every 0.5 s through the Ingress while one api pod is deleted, 2026-11-09T06:51Z.
+# maxUnavailable 0 + readiness probe + preStop sleep keep the Service answering.
+t=5s  deleting pod api-7cdb9dd9ff-4tq5z
+pod "api-7cdb9dd9ff-4tq5z" deleted from rahbar namespace
+requests sent: 41, HTTP 200: 41, errors: 0
+status over time (t seconds, code): [(0.0, 200), (10.7, 200), (12.9, 200), (15.1, 200), (17.2, 200), (19.4, 200), (22.2, 200), (24.3, 200), (26.3, 200), (28.4, 200), (30.5, 200)]
+NAME                   READY   STATUS    RESTARTS   AGE
+api-7cdb9dd9ff-88vq4   1/1     Running   0          125m
+api-7cdb9dd9ff-9kkhm   1/1     Running   0          25s
+api-7cdb9dd9ff-x5prs   1/1     Running   0          125m
+
