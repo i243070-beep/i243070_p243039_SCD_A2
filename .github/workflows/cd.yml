@@ -77,7 +77,7 @@ jobs:
       - name: install kustomize
         run: |
           set -euo pipefail
-          curl -fsSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin kustomize
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin kustomize
 
       - name: install Ollama on the runner and pull the pinned models
         run: |

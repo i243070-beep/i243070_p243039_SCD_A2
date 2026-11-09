@@ -1,5 +1,7 @@
 # Pinned: an unpinned dependency is the drift problem from Lecture 04.
-fastapi==0.115.12
+fastapi==0.121.3
+# starlette 0.46.2 has CVE-2025-62727 (fixed in 0.49.1); fastapi 0.121.3 allows starlette < 0.51.
+starlette==0.50.0
 uvicorn==0.34.2
 pydantic==2.11.4
 httpx==0.28.1

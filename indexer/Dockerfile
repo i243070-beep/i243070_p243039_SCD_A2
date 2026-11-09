@@ -9,6 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # OCR needs system packages, not only pip packages (see requirements.txt):
 #   tesseract-ocr + English data -> pytesseract; poppler-utils -> pdf2image (pdftoppm).
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
