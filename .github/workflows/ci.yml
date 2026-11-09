@@ -149,10 +149,12 @@ jobs:
           ollama pull llama3.2:3b
 
       - name: create a kind cluster
-        uses: helm/kind-action@v1
-        with:
-          config: .github/kind-config.yaml
-          cluster_name: rahbar
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 -o /tmp/kind https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
+          sudo install -m 0755 /tmp/kind /usr/local/bin/kind
+          kind version
+          kind create cluster --name rahbar --config .github/kind-config.yaml --wait 120s
 
       - name: build the images and load them into kind
         run: |
