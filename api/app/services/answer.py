@@ -90,7 +90,7 @@ def answer_question(
     except Exception as exc:  # Chroma or the embedder is down: a safe answer, not a 500
         log.exception("retrieval failed", extra={"error": type(exc).__name__})
         metrics.FALLBACKS.inc()
-        return _response(rid, _canned(FALLBACK_TEXT), [], provider, abstained=False)
+        return _response(rid, _canned(FALLBACK_TEXT), [], provider)
     metrics.RETRIEVAL_SECONDS.observe(time.perf_counter() - t0)
 
     best = max((p.score for p in passages), default=0.0)
