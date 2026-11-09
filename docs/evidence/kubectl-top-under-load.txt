@@ -1,10 +1,11 @@
 # Under load, 2026-11-09T06:56Z, AFTER resource tuning (api 50m/96Mi, chroma 50m/128Mi, redis 25m/32Mi, ui 10m/16Mi requests).
 # 20 different questions, 4 in parallel, through the Ingress; kubectl top every 10 s (metrics-server window is about 15 s).
-# NOTE (honest reading): the first four samples (t=0..39 s) are valid and give the peaks: api 89-125m / 70-72Mi, chroma 44m / 73Mi,
-# redis 20m / 10Mi, ui 4m / 3Mi. After about 40 s the PC ran out of RAM (about 320 MB free of 7.4 GB): the Kubernetes API server stopped
-# answering, so later samples are empty, 13 of the 20 requests failed (client timeouts), and kubelet killed two api pods for failed
-# startup/liveness probes (exit 137, reason Error, NOT OOMKilled). That is host memory starvation, not the container limits.
-# The api request was raised back to 100m CPU: 50m (tried first from the idle numbers) would be exceeded 2x by this peak.
+# CORRECTION (9 Nov 2026): this file does NOT contain a valid under-load measurement. All samples from t=0 to t=39 s are identical, the first one was taken
+# as the load started, and the pods had started only seconds earlier: it is one metrics-server scrape of POD STARTUP, not of query load. The 89-125m figure
+# first drawn from it was wrong and has been withdrawn. A re-measurement was stopped because the PC was overheating, so CPU during generation is unmeasured.
+# What the run does show: with 4 parallel questions on one GPU and an 8 GB PC, 13 of 20 requests failed (the error text was not captured) and latency reached
+# 107 s; after about 40 s the PC ran out of RAM and the Kubernetes API stopped answering, so later samples are empty; kubelet killed two api pods for failed
+# startup/liveness probes (exit 137, reason Error, NOT OOMKilled).
 20 questions, 4 in parallel, wall time 191.2s
 status counts: {'200': 7, 'ERR': 13}
 answered_from_context true: 4  cached: 0

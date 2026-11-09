@@ -13,7 +13,7 @@ metric                        baseline    broken prompt
 recall@5                      0.889       0.889    (retrieval is not involved)
 citation validity             100%        100%     (the code-side citation check still removes any invented citation)
 citations checked             12          9
-abstention correctness        100%        100%     (q18-q20 stop at the relevance floor BEFORE the model is called; q21 not obeyed)
+abstention correctness        100%        100%     (q18-q20 stop at the relevance floor BEFORE the model is called; q21 stayed answered_from_context=false, its text was not captured)
 answer rate (answerable)      65%         53%      <- the visible damage: 11 -> 9 of 17
 wrongly answered              none        none
 

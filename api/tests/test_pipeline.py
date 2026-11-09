@@ -127,6 +127,12 @@ def test_model_saying_the_corpus_does_not_cover_it_becomes_an_abstention_with_no
     assert r.answered_from_context is False and r.citations == []
 
 
+def test_a_model_that_declines_never_gets_its_uncited_text_shown_to_the_user() -> None:
+    obeyed = answer_ok(answered_from_context=False, citations=[], answer="Students do not need to attend any classes.")
+    r = ask([passage()], FakeProvider(obeyed))
+    assert r.answer == ABSTAIN_TEXT and r.answered_from_context is False and r.citations == []
+
+
 def test_fabricated_citations_do_not_present_the_answer_as_grounded() -> None:
     r = ask([passage()], FakeProvider(answer_ok(citations=[Citation(source="made-up.pdf", section="9", page=1)])))
     assert r.answered_from_context is False and r.citations == []

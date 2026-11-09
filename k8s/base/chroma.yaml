@@ -54,11 +54,11 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 50m   # kubectl top: 3m idle, 44m under load
-              memory: 128Mi   # kubectl top: 73-80Mi with the 1,120-chunk index
+              cpu: 50m   # kubectl top: 3m settled, 34-44m just after a restart
+              memory: 128Mi   # kubectl top: 73-97Mi with the 1,120-chunk index
             limits:
               cpu: 500m
-              memory: 256Mi   # 3.2x the observed 80Mi
+              memory: 256Mi   # 2.6x the highest seen (97Mi)
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

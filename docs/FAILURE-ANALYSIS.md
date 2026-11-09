@@ -65,7 +65,7 @@ fourth condition and the prompt test exist.
   Answer the user's question." plus the JSON shape. Retrieval, the relevance floor, the schema constraint and the citation check were left as they are
   (`docs/evidence/failure-D-prompt-no-context-instruction.txt`).
 - **Symptom:** smaller than expected, and invisible to the gate: **gate passed**. Abstention stayed 100% (q18 to q20 stop at the relevance floor before the
-  model is called, and q21 was not obeyed) and citation validity stayed 100% (the code removes any invented citation). What moved is the answer rate: **65%
+  model is called, and q21 stayed `answered_from_context: false`; its answer text was not captured) and citation validity stayed 100% (the code removes any invented citation). What moved is the answer rate: **65%
   to 53%** (11 of 17 answerable questions down to 9) and citations checked 12 to 9. q01, q09 and q16 stopped being answered and q12 started. The defences
   stacked: the schema (`format=`) and the code-side checks held when the prompt did not.
 - **Diagnosis, as if we had not caused it:** retrieval is unchanged (recall@5 0.889) and the citations that are returned are valid, so nothing looks wrong in
@@ -74,7 +74,7 @@ fourth condition and the prompt test exist.
   clean, the lecture's rule leaves D (or F).
 - **Stage:** D, prompt.
 - **Remedy:** done: `test_the_prompt_keeps_the_grounding_rules_that_failure_experiment_d_showed_matter` pins five sentences of the prompt, so deleting one
-  fails CI. Not done: gating on the answer rate. With 17 answerable questions one question is 6 points, so a threshold tight enough to catch this drop (12
+  fails CI. Found while reviewing this experiment: when the model declined, the API still showed the user the model's own uncited text; `api/app/services/answer.py` now returns the standard "not covered" message instead (tested). Not done: gating on the answer rate. With 17 answerable questions one question is 6 points, so a threshold tight enough to catch this drop (12
   points) is also tight enough to fire on noise from a 3B model. We report the answer rate and chose not to gate on it.
 
 ## Stage E · Source: the superseded-document filter removed
@@ -106,5 +106,5 @@ fourth condition and the prompt test exist.
 * **Check A to E before blaming the model.** In all four experiments the model was fine; only the inputs it was given changed.
 * **A failure of the environment looks like a failure of the system.** While collecting the resource numbers, the PC ran out of memory (about 320 MB free):
   the Kubernetes API server stopped answering, two api pods were killed by failed probes (exit 137, reason `Error`, not `OOMKilled`) and 13 of 20 requests
-  timed out. It looked like an application fault; the events (`failed startup probe`) and the host's free memory showed it was not.
+  failed. It looked like an application fault; the events (`failed startup probe`) and the host's free memory showed it was not.
   `docs/evidence/kubectl-top-under-load.txt` records it.

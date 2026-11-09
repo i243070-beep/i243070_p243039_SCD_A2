@@ -118,8 +118,8 @@ def answer_question(
     if not answer.answered_from_context:
         metrics.ABSTENTIONS.inc()
         flags["abstained"] = True
-        text = answer.answer.strip() or ABSTAIN_TEXT
-        return _finish(rid, _canned(text), passages, provider, settings, question, started, best,
+        # Never its own words: text flagged as not grounded has no citation, and an obeyed injection would be shown here.
+        return _finish(rid, _canned(ABSTAIN_TEXT), passages, provider, settings, question, started, best,
                        include_old, flags, cache=None, validated=True)
 
     # 6. citation check: every citation must match a chunk that was actually retrieved

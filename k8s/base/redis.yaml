@@ -72,11 +72,11 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 25m   # kubectl top: 16-20m
-              memory: 32Mi   # kubectl top: 10-15Mi
+              cpu: 25m   # kubectl top: 16-28m
+              memory: 32Mi   # kubectl top: 10-19Mi
             limits:
               cpu: 200m
-              memory: 64Mi   # 4x the observed 15Mi
+              memory: 64Mi   # 3.4x the highest seen (19Mi)
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
