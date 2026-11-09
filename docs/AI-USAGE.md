@@ -18,7 +18,7 @@ This project was built with heavy AI assistance, and this file says so plainly.
 - Took the branch-protection and merge-gate screenshots.
 - Set the working rules that shaped the output: no secrets in any file, no PDFs in Git, report failures honestly, stop and ask before acting.
 
-**Team note.** The assignment is for a pair and the repository name carries both ids, but every commit here is by `i243070-beep`. Work by the partner (p243039) existed only in an earlier repository and was removed; none of it is in this one.
+**Team note.** The assignment is for a pair and the repository name carries both ids. Almost all commits here are by `i243070-beep`. The project partner, Hamza (p243039; pull requests from `p243039-svg`, commits authored as `HamzaMahfooz12`), contributed pull requests #9 and #10 on 9 November 2026: removing an unused argument from `_response` in `api/app/services/answer.py`, updating its caller, and adding blank lines to the README. Earlier work by the partner existed only in a previous repository and was removed; none of it is in this one.
 
 ## Where the AI was wrong
 
