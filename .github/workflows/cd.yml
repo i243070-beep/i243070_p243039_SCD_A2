@@ -82,7 +82,7 @@ jobs:
       - name: install Ollama on the runner and pull the pinned models
         run: |
           set -euo pipefail
-          curl -fsSL https://ollama.com/install.sh | sh
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 https://ollama.com/install.sh | sh
           sudo systemctl stop ollama || true
           OLLAMA_HOST=0.0.0.0:11434 nohup ollama serve > "$RUNNER_TEMP/ollama.log" 2>&1 &
           for i in $(seq 1 60); do curl -fs http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done

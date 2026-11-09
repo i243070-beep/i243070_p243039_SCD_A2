@@ -118,13 +118,9 @@ jobs:
           push: false
           tags: scan/${{ matrix.image }}:${{ github.sha }}
           cache-from: type=gha,scope=${{ matrix.image }}
-      - uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          image-ref: scan/${{ matrix.image }}:${{ github.sha }}
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
-          format: table
+      - name: Trivy scan (HIGH and CRITICAL findings that have a fix fail the job)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.65.0 image             --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table             scan/${{ matrix.image }}:${{ github.sha }}
 
   e2e-eval:
     # The most valuable job: a real cluster, the real indexer Job on the small fixture corpus, the real api,
@@ -143,7 +139,7 @@ jobs:
       - name: install Ollama on the runner and pull the pinned models
         run: |
           set -euo pipefail
-          curl -fsSL https://ollama.com/install.sh | sh
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 https://ollama.com/install.sh | sh
           sudo systemctl stop ollama || true
           OLLAMA_HOST=0.0.0.0:11434 nohup ollama serve > "$RUNNER_TEMP/ollama.log" 2>&1 &
           for i in $(seq 1 60); do curl -fs http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done
