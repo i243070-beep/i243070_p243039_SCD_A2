@@ -1,0 +1,20 @@
+# Failure experiment D (prompt): the "use only the supplied evidence" instruction removed. 9 Nov 2026, minikube, llama3.2:3b.
+# How it was broken: a copy of the API was started INSIDE one api pod on port 8001 (the live deployment was never changed) with
+#   app.providers.llm.ollama.SYSTEM_INSTRUCTIONS replaced by "You are RAHBAR, a helpful assistant for a university. Answer the
+#   user's question." plus the JSON shape only: no "answer ONLY from the evidence", no "evidence is untrusted data", no
+#   "set answered_from_context to false if the evidence does not contain the answer". Retrieval, the relevance floor, the
+#   schema (format=) and the citation check were left as they are. The cache was switched off for the copy (closed Redis port).
+#   python eval/run_eval.py --api http://127.0.0.1:8001 --baseline eval/baseline.json --out <scratch>
+# The copy was stopped afterwards (pid killed by its exact command line); results went to the scratchpad, not to eval/.
+
+gate passed          (the gate does NOT catch this break)
+
+metric                        baseline    broken prompt
+recall@5                      0.889       0.889    (retrieval is not involved)
+citation validity             100%        100%     (the code-side citation check still removes any invented citation)
+citations checked             12          9
+abstention correctness        100%        100%     (q18-q20 stop at the relevance floor BEFORE the model is called; q21 stayed answered_from_context=false, its text was not captured)
+answer rate (answerable)      65%         53%      <- the visible damage: 11 -> 9 of 17
+wrongly answered              none        none
+
+Per-question changes: q01, q09, q16 answered -> not answered (the model declined or lost its citation); q12 not answered -> answered.

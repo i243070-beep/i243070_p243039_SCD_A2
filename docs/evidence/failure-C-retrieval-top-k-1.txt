@@ -1,0 +1,24 @@
+# Failure experiment C (retrieval): TOP_K=1 on the live API. 9 Nov 2026, minikube, llama3.2:3b.
+# How it was broken: kubectl -n rahbar patch configmap rahbar-config --type merge -p '{"data":{"TOP_K":"1"}}'
+#                    kubectl -n rahbar rollout restart deployment/api ; the semantic cache was flushed first (redis-cli FLUSHALL)
+#                    so answers cached with top_k=5 could not hide the break. Then:
+#                    python eval/run_eval.py --api http://127.0.0.1:8088 --host rahbar.local --baseline eval/baseline.json --out <scratch>
+# Restored afterwards: TOP_K=5, cache flushed again, rollout complete. eval/results.json and eval/baseline.json were NOT touched.
+
+GATE FAILED
+  - recall@5 0.611 dropped more than 5% below the baseline 0.889
+exit code: 1
+
+metric                        baseline (top_k=5)   broken (top_k=1)
+recall@3 and recall@5         0.889                0.611
+recall@5 ordinary             0.90                 0.60
+recall@5 exact                1.00                 0.667
+recall@5 version              0.75                 0.50
+citation validity             100%                 100%   (the citations that remain are still real: grounding is intact)
+abstention correctness        100%                 100%   (the relevance floor does not depend on top_k)
+answer rate (answerable)      65%                  59%
+superseded leak               0%                   0%
+
+One line from the broken run's per-request log (this is where the cause shows):
+{"msg": "answered", "top_k": 1, "chunk_ids": ["prospectus-2026-academic-rules-and-regulations.pdf::p1::c0003"], "scores": [0.8257], ...}
+{"msg": "answered", "top_k": 1, "chunk_ids": ["academic-rules-handbook-jun-2026.pdf::p17::c0050"], "scores": [0.7853], ...}

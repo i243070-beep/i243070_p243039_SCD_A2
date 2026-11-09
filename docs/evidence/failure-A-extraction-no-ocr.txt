@@ -1,0 +1,17 @@
+# Failure experiment A (extraction): the scanned PDFs indexed WITHOUT OCR. 9 Nov 2026.
+# How it was broken: pipeline.extract._ocr_page replaced by a function returning "" (what a missing tesseract/poppler,
+# or a skipped OCR step, produces). Then eval/golden_coverage.py (extract -> clean -> chunk, no model needed) was run on the
+# same 9 documents as the real index. Script: not committed (a 6-line wrapper); the command is in docs/FAILURE-ANALYSIS.md.
+#
+# Normal run (real indexer Job, docs/PIPELINE.md):   1,120 chunks; 2023 rules 78 chunks; faculty policy 38 chunks; 0 golden passages missing
+# Broken run (below):                                  975 chunks; 2023 rules  2 chunks; faculty policy  0 chunks; 2 golden passages MISSING
+#
+# Note what did NOT happen: no error, no crash. The Job would exit 0 and the API would be ready.
+
+undergraduate-academic-rules-aug-2023.pdf                      pages= 26 ocr= 24 dropped= 0 chunks=   2 amp=0.86
+faculty-entrepreneurship-and-technical-start-ups-policy.pdf    pages=  8 ocr=  8 dropped= 0 chunks=   0 amp=0.00
+TOTAL chunks: 975  (size=400, overlap=50)
+
+  q08 MISSING faculty-entrepreneurship-and-technical-start-ups-policy.pdf [Eligibility criteria for a technical start-up, p1]
+  q12 MISSING undergraduate-academic-rules-aug-2023.pdf [Rules for Summer Semester, p20]
+2 golden passage(s) MISSING     (the other 17 relevant passages still exist)

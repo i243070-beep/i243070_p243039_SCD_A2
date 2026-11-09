@@ -79,6 +79,9 @@ def run_pipeline(settings: IndexerSettings) -> int:
         raw = extract(str(path), doc_version, superseded)
         doc = clean(raw)  # one document at a time: memory is what limits this Job
         pieces = chunk(doc, settings.chunk_size, settings.chunk_overlap)
+        if not pieces:   # failure experiment A (docs/FAILURE-ANALYSIS.md): a scan indexed without OCR gave 0 chunks and the Job still exited 0
+            raise SystemExit(f"{path.name} produced no chunks ({len(raw.pages)} pages, "
+                             f"{sum(1 for p in raw.pages if p.ocr)} needed OCR): extraction failed, refusing to publish a partial index")
         log("document indexed", source=path.name, doc_version=doc_version, superseded=superseded,
             pages=len(raw.pages), ocr_pages=sum(1 for p in raw.pages if p.ocr),
             pages_dropped_by_clean=len(raw.pages) - len(doc.pages), chunks=len(pieces),

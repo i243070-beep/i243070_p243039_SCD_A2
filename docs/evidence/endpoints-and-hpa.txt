@@ -1,0 +1,24 @@
+# Scale and discovery, 2026-11-09T06:51Z. The Service was not touched: its selector finds the pods by label.
+
+$ kubectl -n rahbar get deployment api
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+api    3/3     3            3           17h
+
+$ kubectl -n rahbar get pods -l app.kubernetes.io/name=api -o wide
+NAME                   READY   STATUS    RESTARTS   AGE    IP               NODE       NOMINATED NODE   READINESS GATES
+api-7cdb9dd9ff-4tq5z   1/1     Running   0          124m   10.244.120.114   minikube   <none>           <none>
+api-7cdb9dd9ff-88vq4   1/1     Running   0          124m   10.244.120.113   minikube   <none>           <none>
+api-7cdb9dd9ff-x5prs   1/1     Running   0          124m   10.244.120.115   minikube   <none>           <none>
+
+$ kubectl -n rahbar get endpoints api
+NAME   ENDPOINTS                                                     AGE
+api    10.244.120.113:8000,10.244.120.114:8000,10.244.120.115:8000   17h
+
+$ kubectl -n rahbar get hpa
+NAME   REFERENCE        TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+api    Deployment/api   cpu: 4%/70%   3         8         3          17h
+
+$ kubectl -n rahbar describe hpa api   (metrics section)
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  4% (4m) / 70%
+Min replicas:                                          3

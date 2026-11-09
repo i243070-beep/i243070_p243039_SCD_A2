@@ -89,6 +89,15 @@ def test_gate_fails_on_each_of_the_three_conditions() -> None:
     assert any("citation validity" in m for m in ev.gate({"recall_at_5": 0.8, "abstention_correctness": 1.0, "citation_validity": 0.90}, BASE))
 
 
+def test_gate_fails_when_a_superseded_document_leaks_more_than_the_baseline_allows() -> None:
+    base = {**BASE, "superseded_leak_rate": 0.0}
+    ok = {"recall_at_5": 0.8, "abstention_correctness": 1.0, "citation_validity": 1.0}
+    assert ev.gate({**ok, "superseded_leak_rate": 0.0}, base) == []
+    assert any("superseded leak" in m for m in ev.gate({**ok, "superseded_leak_rate": 0.5}, base))
+    assert ev.gate({**ok, "superseded_leak_rate": None}, base) == []      # a golden set with no 'avoid' entries: nothing to compare
+    assert ev.gate({**ok, "superseded_leak_rate": 0.5}, BASE) == []        # an old baseline without the key: no opinion
+
+
 def test_the_recall_gate_allows_exactly_five_points_of_drop() -> None:
     assert ev.gate({"recall_at_5": 0.75, "abstention_correctness": 1.0, "citation_validity": 1.0}, BASE) == []
     assert ev.gate({"recall_at_5": 0.749, "abstention_correctness": 1.0, "citation_validity": 1.0}, BASE) != []

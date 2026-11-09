@@ -170,6 +170,12 @@ def gate(results: dict, baseline: dict | None) -> list[str]:
     now, before = results.get("recall_at_5"), (baseline or {}).get("recall_at_5")
     if now is not None and before is not None and now < before - MAX_RECALL5_DROP - eps:
         failures.append(f"recall@5 {now:.3f} dropped more than {MAX_RECALL5_DROP:.0%} below the baseline {before:.3f}")
+    # A fourth, stricter-than-required check, added after failure experiment E (docs/FAILURE-ANALYSIS.md): without the
+    # superseded filter the first three conditions all passed while 100% of the version questions leaked a repealed document.
+    leak, leak_before = results.get("superseded_leak_rate"), (baseline or {}).get("superseded_leak_rate")
+    if leak is not None and leak_before is not None and leak > leak_before + eps:
+        failures.append(f"superseded leak rate {leak:.0%} is above the baseline {leak_before:.0%}: "
+                        "a repealed document reached the top of the retrieval")
     return failures
 
 

@@ -1,0 +1,57 @@
+# Under load, 2026-11-09T06:56Z, AFTER resource tuning (api 50m/96Mi, chroma 50m/128Mi, redis 25m/32Mi, ui 10m/16Mi requests).
+# 20 different questions, 4 in parallel, through the Ingress; kubectl top every 10 s (metrics-server window is about 15 s).
+# CORRECTION (9 Nov 2026): this file does NOT contain a valid under-load measurement. All samples from t=0 to t=39 s are identical, the first one was taken
+# as the load started, and the pods had started only seconds earlier: it is one metrics-server scrape of POD STARTUP, not of query load. The 89-125m figure
+# first drawn from it was wrong and has been withdrawn. A re-measurement was stopped because the PC was overheating, so CPU during generation is unmeasured.
+# What the run does show: with 4 parallel questions on one GPU and an 8 GB PC, 13 of 20 requests failed (the error text was not captured) and latency reached
+# 107 s; after about 40 s the PC ran out of RAM and the Kubernetes API stopped answering, so later samples are empty; kubelet killed two api pods for failed
+# startup/liveness probes (exit 137, reason Error, NOT OOMKilled).
+20 questions, 4 in parallel, wall time 191.2s
+status counts: {'200': 7, 'ERR': 13}
+answered_from_context true: 4  cached: 0
+latency s: min 9.9 max 107.1
+
+--- kubectl top pods --containers at t=0s
+api-58c784d7c-f5jjz      api      111m   70Mi   
+api-58c784d7c-hlttm      api      89m    71Mi   
+api-58c784d7c-zsjmj      api      125m   72Mi   
+chroma-0                 chroma   44m    73Mi   
+redis-67ccfc9bbd-fch2l   redis    20m    10Mi   
+ui-55999f5d67-kk4hh      ui       4m     3Mi
+--- kubectl top pods --containers at t=12s
+api-58c784d7c-f5jjz      api      111m   70Mi   
+api-58c784d7c-hlttm      api      89m    71Mi   
+api-58c784d7c-zsjmj      api      125m   72Mi   
+chroma-0                 chroma   44m    73Mi   
+redis-67ccfc9bbd-fch2l   redis    20m    10Mi   
+ui-55999f5d67-kk4hh      ui       4m     3Mi
+--- kubectl top pods --containers at t=23s
+api-58c784d7c-f5jjz      api      111m   70Mi   
+api-58c784d7c-hlttm      api      89m    71Mi   
+api-58c784d7c-zsjmj      api      125m   72Mi   
+chroma-0                 chroma   44m    73Mi   
+redis-67ccfc9bbd-fch2l   redis    20m    10Mi   
+ui-55999f5d67-kk4hh      ui       4m     3Mi
+--- kubectl top pods --containers at t=39s
+api-58c784d7c-f5jjz      api      111m   70Mi   
+api-58c784d7c-hlttm      api      89m    71Mi   
+api-58c784d7c-zsjmj      api      125m   72Mi   
+chroma-0                 chroma   44m    73Mi   
+redis-67ccfc9bbd-fch2l   redis    20m    10Mi   
+ui-55999f5d67-kk4hh      ui       4m     3Mi
+--- kubectl top pods --containers at t=63s
+
+--- kubectl top pods --containers at t=87s
+
+--- kubectl top pods --containers at t=110s
+
+--- kubectl top pods --containers at t=133s
+
+--- kubectl top pods --containers at t=156s
+
+--- kubectl top pods --containers at t=178s
+
+--- kubectl top pods --containers at t=204s
+
+
+PEAK per container over the run (cpu millicores, memory Mi): {'api': (125, 72), 'chroma': (44, 73), 'redis': (20, 10), 'ui': (4, 3)}

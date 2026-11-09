@@ -156,7 +156,11 @@ jobs:
       - name: create a kind cluster
         run: |
           set -euo pipefail
-          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 -o /tmp/kind https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64
+          for url in https://kind.sigs.k8s.io/dl/v0.31.0/kind-linux-amd64 \
+               https://github.com/kubernetes-sigs/kind/releases/download/v0.31.0/kind-linux-amd64; do
+            curl -fsSL --retry 4 --retry-all-errors --retry-delay 10 -o /tmp/kind "$url" && break
+          done
+          test -s /tmp/kind
           sudo install -m 0755 /tmp/kind /usr/local/bin/kind
           kind version
           kind create cluster --name rahbar --config .github/kind-config.yaml --wait 120s

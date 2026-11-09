@@ -6,6 +6,8 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+import pytest
+
 from pipeline.config import get_settings
 from pipeline.dummy import DUMMY_DIM, DUMMY_MODEL, fake_vector, write_dummy_index
 from pipeline.run import discover
@@ -65,3 +67,13 @@ def test_discover_reads_fixture_front_matter() -> None:
     found = {p.name: (version, old) for p, version, old in discover(str(fixtures))}
     assert found["academic-rules-2023.md"] == ("2023", True)
     assert found["academic-rules-2026.md"] == ("2026", False)
+
+
+def test_a_document_that_yields_no_chunks_fails_the_job_instead_of_publishing_a_partial_index(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Failure experiment A: a scanned PDF indexed without OCR produced 0 chunks and the Job still exited 0."""
+    (tmp_path / "blank.md").write_text("   \n", encoding="utf-8")
+    monkeypatch.setenv("CORPUS_DIR", str(tmp_path))
+    from pipeline.run import run_pipeline
+    with pytest.raises(SystemExit, match="produced no chunks"):
+        run_pipeline(get_settings())
