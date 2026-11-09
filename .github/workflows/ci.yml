@@ -71,8 +71,10 @@ jobs:
       - name: install kustomize and kubeconform
         run: |
           set -euo pipefail
-          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin kustomize
-          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | sudo tar xz -C /usr/local/bin kubeconform
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 -o /tmp/kustomize.tgz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+          sudo tar xzf /tmp/kustomize.tgz -C /usr/local/bin kustomize
+          curl -fsSL --retry 6 --retry-all-errors --retry-delay 10 -o /tmp/kubeconform.tgz "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          sudo tar xzf /tmp/kubeconform.tgz -C /usr/local/bin kubeconform
       - name: kustomize build | kubeconform (a broken manifest fails here in seconds, not on the cluster)
         run: |
           set -euo pipefail
