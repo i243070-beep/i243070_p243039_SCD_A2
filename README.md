@@ -1,11 +1,17 @@
 # RAHBAR
 
+
+
+
 [![ci](https://github.com/i243070-beep/i243070_p243039_SCD_A2/actions/workflows/ci.yml/badge.svg)](https://github.com/i243070-beep/i243070_p243039_SCD_A2/actions/workflows/ci.yml)
 [![cd](https://github.com/i243070-beep/i243070_p243039_SCD_A2/actions/workflows/cd.yml/badge.svg)](https://github.com/i243070-beep/i243070_p243039_SCD_A2/actions/workflows/cd.yml)
 
 University rules are spread across scanned PDFs, handbooks and web pages, and some of them have been replaced by newer versions. RAHBAR answers questions about FAST-NUCES rules from those documents only: every answer cites the section it came from, a repealed rule is not quoted unless you ask about an older version, and when the documents do not cover a question it says so instead of guessing. It runs on Kubernetes, with an indexer Job as the only writer to the vector store, a three-replica API that only reads, a semantic cache, and a CI gate that blocks a merge when retrieval quality drops.
 
 ## Architecture
+
+
+
 
 ```mermaid
 flowchart LR
