@@ -15,7 +15,6 @@ Writes eval/chunk-tuning/results.json and prints a table for docs/PIPELINE.md.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 import time
@@ -33,7 +32,7 @@ sys.path.insert(0, str(HERE))
 import run_eval  # noqa: E402
 from app.retrieval.chroma import exact_tokens  # noqa: E402
 from app.services.grounding import is_older_version_question  # noqa: E402
-from pipeline.chunk import amplification, chunk  # noqa: E402
+from pipeline.chunk import chunk  # noqa: E402
 from pipeline.clean import clean  # noqa: E402
 from pipeline.extract import extract  # noqa: E402
 from pipeline.models import Document, Page  # noqa: E402
