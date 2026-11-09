@@ -1,0 +1,23 @@
+# Failure experiment E (source): the superseded-document filter removed. 9 Nov 2026, minikube, llama3.2:3b.
+# How it was broken: a copy of the API was started inside one api pod on port 8001 (live deployment untouched) with
+#   app.services.answer.is_older_version_question replaced by `lambda q: True`, i.e. every question retrieves with
+#   include_superseded=True, as if the metadata filter had been deleted. Cache off for the copy. Then
+#   python eval/run_eval.py --api http://127.0.0.1:8001 --baseline eval/baseline.json --out <scratch>
+#
+# The ORIGINAL three-condition gate said:  gate passed
+# (the rules 2023 and the annual report 2019-20 are the superseded documents)
+
+metric                        baseline    no filter
+recall@3                      0.889       0.778
+recall@5                      0.889       0.889
+citation validity             100%        100%
+abstention correctness        100%        100%
+superseded leak rate          0%          100%      <- the damage: both version questions with an 'avoid' list leaked
+q11 (summer semester)         superseded passage absent -> present in the top 5
+q13 (faculty count)           not answered -> ANSWERED, while recall@5 stays 0: the right (current) passage was not retrieved,
+                              so the answer can only have come from the repealed report
+
+Remedy (done): eval/run_eval.py now has a fourth gate condition: the superseded leak rate may not exceed the baseline's.
+Replaying these saved results through the new gate:
+  source -> ['superseded leak rate 100% is above the baseline 0%: a repealed document reached the top of the retrieval']
+  prompt -> gate passed   (experiment D is still not caught by any gate; see docs/FAILURE-ANALYSIS.md)
