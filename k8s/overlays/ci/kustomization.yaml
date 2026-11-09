@@ -39,6 +39,15 @@ patches:
           name: corpus
           mountPath: /corpus
           readOnly: true
+  # DEMO (assignment 6, 'show the gate working'): TOP_K=0 is a plausible slip. Chroma rejects n_results=0, the API falls back safely
+  # (no 500) with nothing retrieved, so recall@5 is 0 and the e2e-eval gate must turn this pull request red.
+  - target:
+      kind: ConfigMap
+      name: rahbar-config
+    patch: |-
+      - op: replace
+        path: /data/TOP_K
+        value: "0"
 images:
   - name: samullah/rahbar-api
     newTag: ci
