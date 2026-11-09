@@ -137,7 +137,7 @@ def answer_question(
                    cache=cache, validated=True)
 
 
-def _response(rid: str, answer: Answer, passages: list[Passage], provider: LLMProvider, abstained: bool) -> AskResponse:
+def _response(rid: str, answer: Answer, passages: list[Passage], provider: LLMProvider) -> AskResponse:
     return AskResponse(
         request_id=rid, answer=answer.answer, citations=answer.citations,
         answered_from_context=answer.answered_from_context, confidence=answer.confidence,
@@ -148,7 +148,7 @@ def _response(rid: str, answer: Answer, passages: list[Passage], provider: LLMPr
 def _finish(rid: str, answer: Answer, passages: list[Passage], provider: LLMProvider, settings: Settings,
             question: str, started: float, best: float, include_old: bool, flags: dict[str, object],
             cache: SemanticCache | None, validated: bool) -> AskResponse:
-    response = _response(rid, answer, passages, provider, bool(flags["abstained"]))
+    response = _response(rid, answer, passages, provider)
     if cache is not None and is_cacheable(question, response, validated):
         cache.store(question, response)
     # one line per request: where the five of six failure stages are visible when an answer is wrong
